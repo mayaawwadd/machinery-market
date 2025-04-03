@@ -1,8 +1,17 @@
-const express = require('express');
-const router = express.Router();
-const { registerUser, loginUser } = require('../controllers/userController');
+// Import required modules using ES Modules syntax
+import express from 'express';
+import { registerUser, loginUser } from '../controllers/userController.js';
 
+// Create a new Express router instance
+const router = express.Router();
+
+// @route   POST /api/users/register
+// @desc    Register a new user
 router.post('/register', registerUser);
+
+// @route   POST /api/users/login
+// @desc    Authenticate user and return user info
 router.post('/login', loginUser);
 
-module.exports = router;
+// Export the router
+export default router;

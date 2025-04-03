@@ -1,27 +1,38 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const userRoutes = require('./routes/userRoutes');
+// Load environment variables from .env
+import dotenv from 'dotenv';
+dotenv.config();
 
+// Core dependencies
+import express from 'express';
+import cors from 'cors';
+
+// Custom modules
+import connectDB from './config/db.js';
+import userRoutes from './routes/userRoutes.js';
+
+// Initialize Express app
 const app = express();
 
-//middleware
-app.use(cors());
-app.use(express.json());
-app.use('/api/users', userRoutes);
-
-// Placeholder for DB connection
+// Connect to MongoDB
 connectDB();
 
-//test route
+// Middleware
+app.use(cors()); // Enable Cross-Origin requests
+app.use(express.json()); // Parse JSON request bodies
+
+// Serve static files from /public
+app.use('/public', express.static('public'));
+
+// Routes
+app.use('/api/users', userRoutes);
+
+// Test route
 app.get('/', (req, res) => {
-  res.send('API is running...');
+  res.send('🚀 API is running...');
 });
 
-//initilaize server and run
+// Initialize server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`server is running on port ${PORT}`);
+  console.log(`✅ Server is running on http://localhost:${PORT}`);
 });
