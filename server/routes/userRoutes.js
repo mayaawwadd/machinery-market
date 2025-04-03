@@ -1,9 +1,17 @@
 // Import required modules using ES Modules syntax
 import express from 'express';
-import { registerUser, loginUser } from '../controllers/userController.js';
+import {
+  registerUser,
+  loginUser,
+  getAllUsers,
+  updateUser,
+  deleteUser,
+} from '../controllers/userController.js';
 
 // Create a new Express router instance
 const router = express.Router();
+
+router.route('/').get(getAllUsers).patch(updateUser).delete(deleteUser);
 
 // @route   POST /api/users/register
 // @desc    Register a new user
