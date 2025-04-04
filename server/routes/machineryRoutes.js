@@ -3,19 +3,17 @@ import {
   createMachinery,
   getAllMachinery,
   getMachineryById,
+  updateMachinery,
+  deleteMachinery,
+  getMyMachinery,
 } from '../controllers/machineryController.js';
 
-// Initialize the router instance
 const router = express.Router();
 
 /**
  * @route   POST /api/machinery
  * @desc    Create a new machinery listing
- * @access  Protected (requires authentication)
- *
- * Expected in req.body:
- * - All required machinery fields (e.g., title, priceFils, images, etc.)
- * - Seller ID should come from req.user (via auth middleware, later)
+ * @access  Protected
  */
 router.post('/', createMachinery);
 
@@ -23,9 +21,6 @@ router.post('/', createMachinery);
  * @route   GET /api/machinery
  * @desc    Fetch all machinery listings
  * @access  Public
- *
- * Returns an array of all machinery documents from the database,
- * including seller info (populated from User model).
  */
 router.get('/', getAllMachinery);
 
@@ -33,12 +28,28 @@ router.get('/', getAllMachinery);
  * @route   GET /api/machinery/:id
  * @desc    Fetch a single machinery listing by ID
  * @access  Public
- *
- * :id should be a valid MongoDB ObjectId.
- * If the machinery with that ID exists, it returns the full object;
- * otherwise, returns 404.
  */
 router.get('/:id', getMachineryById);
 
-// Export the router so it can be mounted in index.js
+/**
+ * @route   PATCH /api/machinery/:id
+ * @desc    Partially update a machinery listing
+ * @access  Protected (only the seller or admin)
+ */
+router.patch('/:id', updateMachinery);
+
+/**
+ * @route   DELETE /api/machinery/:id
+ * @desc    Delete a machinery listing
+ * @access  Protected (only the seller or admin)
+ */
+router.delete('/:id', deleteMachinery);
+
+/**
+ * @route   GET /api/machinery/my
+ * @desc    Get machinery listings for the current logged-in user
+ * @access  Protected
+ */
+router.get('/my', getMyMachinery);
+
 export default router;
