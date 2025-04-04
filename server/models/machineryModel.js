@@ -78,7 +78,7 @@ const machinerySchema = new mongoose.Schema(
       trim: true,
     },
 
-    priceFils: {
+    priceCents: {
       type: Number,
       required: [true, 'Price is required'],
       min: [0, 'Price cannot be negative'],
