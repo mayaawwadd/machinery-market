@@ -21,8 +21,8 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
 /**
  * @desc Register a new user and return token
- * @route POST /users
- * @access Private
+ * @route POST /api/users/register
+ * @access Public
  *
  * This function creates a new user after validating input,
  * checking for duplicate email or username, and hashing the password.
@@ -138,13 +138,15 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const { _id } = req.body;
   //confirm data
   if (!_id) {
-    res.status(400).json({ message: 'User Id is required ' });
+    return res.status(400).json({ message: 'User Id is required ' });
   }
+
   const user = await User.findById(_id).exec();
   //check if user exists
   if (!user) {
-    res.status(400).json({ message: 'User not found' });
+    return res.status(400).json({ message: 'User not found' });
   }
+
   await user.deleteOne();
   const reply = `Username ${user.username} with ID ${_id} deleted`;
   res.status(200).json(reply);
@@ -172,7 +174,7 @@ export const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         profileImage: user.profileImage,
-        token: generateToken(user.id),
+        token: generateToken(user._id),
         message: 'Login successful',
       });
     } else {
