@@ -91,9 +91,12 @@ export const registerUser = asyncHandler(async (req, res) => {
  */
 
 export const updateUser = asyncHandler(async (req, res) => {
-  const { _id, username, email, phone, password } = req.body;
+  const { username, email, phone, password } = req.body;
 
-  if (!_id || !username || !email || !phone) {
+  // Get the logged-in user's id from the JWT to prevent users from updating other people's accounts
+  const _id = req.user._id;
+
+  if (!username || !email || !phone) {
     return res
       .status(400)
       .json({ message: 'All fields are required except password' });
@@ -101,15 +104,19 @@ export const updateUser = asyncHandler(async (req, res) => {
 
   // Find the user by ID
   const user = await User.findById(_id).exec();
+
   if (!user) {
-    return res.status(400).json({ message: 'no user found' });
+    return res.status(400).json({ message: 'User not found' });
   }
 
   // Check for duplicate username (excluding the current user's own username)
   const duplicateUsername = await User.findOne({ username }).lean().exec();
 
-  if (duplicateUsername && duplicateUsername?._id.toString() !== _id) {
-    return res.status(409).json({ message: 'Duplicate username' });
+  if (
+    duplicateUsername &&
+    duplicateUsername?._id.toString() !== _id.toString()
+  ) {
+    return res.status(409).json({ message: 'Username already taken' });
   }
 
   // Update user fields
