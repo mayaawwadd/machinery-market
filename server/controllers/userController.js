@@ -124,7 +124,21 @@ export const updateUser = asyncHandler(async (req, res) => {
  *
  * This function is intended to delete a user. Currently, it is unimplemented.
  */
-export const deleteUser = asyncHandler(async (req, res) => {});
+export const deleteUser = asyncHandler(async (req, res) => {
+  const { _id } = req.body;
+  //confirm data
+  if (!_id) {
+    res.status(400).json({ message: 'User Id is required ' });
+  }
+  const user = await User.findById(_id).exec();
+  //check if user exists
+  if (!user) {
+    res.status(400).json({ message: 'User not found' });
+  }
+  await user.deleteOne();
+  const reply = `Username ${user.username} with ID ${_id} deleted`;
+  res.status(200).json(reply);
+});
 
 /**
  * @desc    Log in a user
