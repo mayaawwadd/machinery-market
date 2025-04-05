@@ -1,4 +1,3 @@
-// Import required modules using ES Modules syntax
 import express from 'express';
 import {
   registerUser,
