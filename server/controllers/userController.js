@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
 import bcrypt from 'bcrypt';
 import asyncHandler from 'express-async-handler';
+import generateToken from '../utils/generateToken.js';
 
 /**
  * @desc update a user
@@ -130,8 +131,7 @@ export const deleteUser = asyncHandler(async (req, res) => {});
  * @route   POST /users/login
  * @access  Public
  *
- * This function logs in a user by checking if the email and password match.
- * NOTE: It currently compares raw passwords instead of using bcrypt (insecure).
+ * Authenticates user credentials and returns a JWT if valid.
  */
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -141,11 +141,13 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     // Simple password check (for demo only – use hashing in production)
-    if (user && user.password === password) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       res.status(200).json({
         _id: user._id,
         username: user.username,
+        role: user.role,
         email: user.email,
+        token: generateToken(user.id),
         message: 'Login successful',
       });
     } else {
