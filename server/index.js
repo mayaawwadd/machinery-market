@@ -10,6 +10,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import machineryRoutes from './routes/machineryRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 // Initialize Express app
 const app = express();
@@ -27,6 +28,7 @@ app.use('/public', express.static('public'));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/machinery', machineryRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Test route
 app.get('/', (req, res) => {
