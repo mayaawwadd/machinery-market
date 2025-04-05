@@ -1,11 +1,12 @@
 import User from '../models/userModel.js';
 import bcrypt from 'bcrypt';
 import asyncHandler from 'express-async-handler';
+import generateToken from '../utils/generateToken.js';
 
 /**
- * @desc update a user
- * @route patch /users
- * @access Private
+ * @desc    Retrieve all users
+ * @route   GET /users
+ * @access  Private
  *
  * This function retrieves all users from the database,
  * excluding their passwords, and returns them as JSON.
@@ -19,8 +20,8 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc update a user
- * @route patch /users
+ * @desc Register a new user and return token
+ * @route POST /users
  * @access Private
  *
  * This function creates a new user after validating input,
@@ -35,6 +36,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     if (!username || !email || !password || !phone) {
       return res.status(400).json({ message: 'All fields are required' });
     }
+
     // Check if a user with the same email or username already exists
     const userExists = await User.findOne({ email });
     const duplicateUsername = await User.findOne({ username }).lean().exec();
@@ -48,6 +50,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
     // Hash the password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const userObject = {
       username,
       email,
@@ -59,7 +62,15 @@ export const registerUser = asyncHandler(async (req, res) => {
     const user = await User.create(userObject);
 
     if (user) {
-      res.status(201).json({ message: `User ${username} has been created` });
+      res.status(201).json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        token: generateToken(user._id),
+        message: `User ${username} has been created`,
+      });
     } else {
       res.status(400).json({ message: 'Invalid data received' });
     }
@@ -70,9 +81,9 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc update a user
- * @route patch /users
- * @access Private
+ * @desc    Update a user
+ * @route   PATCH /users
+ * @access  Private
  *
  * This function updates an existing user’s details. It checks for
  * the user’s existence, ensures the username is not duplicated,
@@ -117,9 +128,9 @@ export const updateUser = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc delete a user
- * @route delete /users
- * @access Private
+ * @desc    Delete a user
+ * @route   DELETE /users
+ * @access  Private
  *
  * This function is intended to delete a user. Currently, it is unimplemented.
  */
@@ -144,8 +155,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
  * @route   POST /users/login
  * @access  Public
  *
- * This function logs in a user by checking if the email and password match.
- * NOTE: It currently compares raw passwords instead of using bcrypt (insecure).
+ * Authenticates user credentials and returns a JWT if valid.
  */
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -155,11 +165,14 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     // Simple password check (for demo only – use hashing in production)
-    if (user && user.password === password) {
+    if (user && (await bcrypt.compare(password, user.password))) {
       res.status(200).json({
         _id: user._id,
         username: user.username,
         email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        token: generateToken(user.id),
         message: 'Login successful',
       });
     } else {
