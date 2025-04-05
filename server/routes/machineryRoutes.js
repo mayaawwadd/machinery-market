@@ -7,6 +7,7 @@ import {
   deleteMachinery,
   getMyMachinery,
 } from '../controllers/machineryController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const router = express.Router();
  * @desc    Create a new machinery listing
  * @access  Protected
  */
-router.post('/', createMachinery);
+router.post('/', protect, createMachinery);
 
 /**
  * @route   GET /api/machinery
@@ -36,20 +37,20 @@ router.get('/:id', getMachineryById);
  * @desc    Partially update a machinery listing
  * @access  Protected (only the seller or admin)
  */
-router.patch('/:id', updateMachinery);
+router.patch('/:id', protect, updateMachinery);
 
 /**
  * @route   DELETE /api/machinery/:id
  * @desc    Delete a machinery listing
  * @access  Protected (only the seller or admin)
  */
-router.delete('/:id', deleteMachinery);
+router.delete('/:id', protect, deleteMachinery);
 
 /**
  * @route   GET /api/machinery/my
  * @desc    Get machinery listings for the current logged-in user
  * @access  Protected
  */
-router.get('/my', getMyMachinery);
+router.get('/my', protect, getMyMachinery);
 
 export default router;
