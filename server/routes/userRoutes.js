@@ -8,6 +8,7 @@ import {
 } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { adminOnly } from '../middleware/adminMiddleware.js';
+import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
 
 // Create a new Express router instance
 const router = express.Router();
@@ -17,7 +18,7 @@ router
   .route('/')
   .get(protect, adminOnly, getAllUsers)
   .patch(protect, updateUser)
-  .delete(protect, deleteUser);
+  .delete(protect, selfOrAdmin, deleteUser);
 
 // Public Routes
 // @route   POST /api/users/register
