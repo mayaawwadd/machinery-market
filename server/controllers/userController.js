@@ -138,25 +138,43 @@ export const updateUser = asyncHandler(async (req, res) => {
  * @desc    Delete a user
  * @route   DELETE /users
  * @access  Private
- *
- * This function is intended to delete a user. Currently, it is unimplemented.
  */
 export const deleteUser = asyncHandler(async (req, res) => {
-  const { _id } = req.body;
-  //confirm data
-  if (!_id) {
-    return res.status(400).json({ message: 'User Id is required ' });
+  // Get the ID of the user to be deleted from the request body
+  const { _id: targetUserId } = req.body;
+
+  // Validate Input - make sure a user ID was provided
+  if (!targetUserId) {
+    return res.status(400).json({ message: 'User ID is required' });
   }
 
-  const user = await User.findById(_id).exec();
-  //check if user exists
-  if (!user) {
+  // Locate the user exists in the database and get their user document
+  const userToDelete = await User.findById(targetUserId);
+
+  // Check if the user the request is trying to delete exists
+  if (!userToDelete) {
     return res.status(400).json({ message: 'User not found' });
   }
 
-  await user.deleteOne();
-  const reply = `Username ${user.username} with ID ${_id} deleted`;
-  res.status(200).json(reply);
+  // Get the ID and role of the currently authenticated user
+  const currentUserId = req.user._id.toString();
+  const isAdmin = req.user.role === 'admin';
+
+  // Only allow deletion if:
+  // - The user is deleting their own account
+  // - The user is an admin
+  if (targetUserId !== currentUserId && !isAdmin) {
+    return res
+      .status(403)
+      .json({ message: 'Not authorized to delete this user.' });
+  }
+
+  // All checks passed - delete the user
+  await userToDelete.deleteOne();
+
+  res.status(200).json({
+    message: `User ${userToDelete.username} deleted successfully`,
+  });
 });
 
 /**
