@@ -7,6 +7,7 @@ import {
   deleteUser,
 } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import { adminOnly } from '../middleware/adminMiddleware.js';
 
 // Create a new Express router instance
 const router = express.Router();
@@ -14,7 +15,7 @@ const router = express.Router();
 // Protected Routes (require login)
 router
   .route('/')
-  .get(protect, getAllUsers)
+  .get(protect, adminOnly, getAllUsers)
   .patch(protect, updateUser)
   .delete(protect, deleteUser);
 
