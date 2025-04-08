@@ -186,3 +186,19 @@ export const loginUser = asyncHandler(async (req, res) => {
     res.status(401).json({ message: 'Invalid email or password' });
   }
 });
+
+/**
+ * @desc    Get logged-in user's profile
+ * @route   GET /api/users/profile
+ * @access  Private
+ */
+export const getProfile = asyncHandler(async (req, res) => {
+  // req.user is set by protect middleware
+  const user = await User.findById(req.user._id).select('-password');
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  res.status(200).json(user);
+});

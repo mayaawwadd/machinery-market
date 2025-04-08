@@ -5,6 +5,7 @@ import {
   getAllUsers,
   updateUser,
   deleteUser,
+  getProfile,
 } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { adminOnly } from '../middleware/adminMiddleware.js';
@@ -19,6 +20,10 @@ router
   .get(protect, adminOnly, getAllUsers)
   .patch(protect, updateUser)
   .delete(protect, selfOrAdmin, deleteUser);
+
+// @route   GET /api/users/profile
+// @desc    Get logged-in user's profile
+router.get('/profile', protect, getProfile);
 
 // Public Routes
 // @route   POST /api/users/register
