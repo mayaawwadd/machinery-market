@@ -18,8 +18,11 @@ const router = express.Router();
 router
   .route('/')
   .get(protect, adminOnly, getAllUsers)
-  .patch(protect, updateUser)
   .delete(protect, selfOrAdmin, deleteUser);
+
+// @route   Patch /api/users/profile
+// @desc    Update logged-in user's profile
+router.patch('/profile', protect, updateUser);
 
 // @route   GET /api/users/profile
 // @desc    Get logged-in user's profile
