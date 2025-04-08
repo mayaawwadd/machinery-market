@@ -14,7 +14,7 @@ import generateToken from '../utils/generateToken.js';
 export const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select('-password').lean(); // .lean() returns plain JS objects for better performance
   if (!users) {
-    return res.status(400).json({ message: 'No users found' });
+    return res.status(404).json({ message: 'No users found' });
   }
   res.json(users);
 });
@@ -31,53 +31,51 @@ export const registerUser = asyncHandler(async (req, res) => {
   // Use object destructuring to get the username, email and password out of the request body
   const { username, email, password, phone } = req.body;
 
-  try {
-    // Check if all required fields are provided
-    if (!username || !email || !password || !phone) {
-      return res.status(400).json({ message: 'All fields are required' });
+  // Check if all required fields are provided
+  if (!username || !email || !password || !phone) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  // Check if a user with the same email or username already exists
+  const existingUser = await User.findOne({
+    $or: [{ email }, { username }],
+  }).lean();
+
+  if (existingUser) {
+    if (existingUser.email === email) {
+      return res.status(409).json({ message: 'Email already exists' });
     }
-
-    // Check if a user with the same email or username already exists
-    const userExists = await User.findOne({ email });
-    const duplicateUsername = await User.findOne({ username }).lean().exec();
-
-    if (userExists) {
-      return res.status(400).json({ message: 'Email already exists' });
+    if (existingUser.username === username) {
+      return res.status(409).json({ message: 'Username already taken' });
     }
-    if (duplicateUsername) {
-      return res.status(400).json({ message: 'User already taken' });
-    }
+  }
 
-    // Hash the password before saving
-    const hashedPassword = await bcrypt.hash(password, 10);
+  // Hash the password before saving
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    const userObject = {
-      username,
-      email,
-      password: hashedPassword,
-      phone,
-      profileImage: req.body.profileImage,
-    };
+  const userObject = {
+    username,
+    email,
+    password: hashedPassword,
+    phone,
+    profileImage: req.body.profileImage,
+  };
 
-    // Create the user in the database
-    const user = await User.create(userObject);
+  // Create the user in the database
+  const user = await User.create(userObject);
 
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        profileImage: user.profileImage,
-        token: generateToken(user._id),
-        message: `User ${username} has been created`,
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid data received' });
-    }
-  } catch (err) {
-    console.error('❌ Register error:', err);
-    res.status(500).json({ message: 'Server error' });
+  if (user) {
+    res.status(201).json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      token: generateToken(user._id),
+      message: `User ${username} has been created`,
+    });
+  } else {
+    res.status(400).json({ message: 'Invalid data received' });
   }
 });
 
@@ -107,7 +105,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   const user = await User.findById(_id).exec();
 
   if (!user) {
-    return res.status(400).json({ message: 'User not found' });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   // Check for duplicate username (excluding the current user's own username)
@@ -144,12 +142,12 @@ export const deleteUser = asyncHandler(async (req, res) => {
   // Get the ID of the user to be deleted from the request body
   const { _id: targetUserId } = req.body;
 
-  // Locate the user exists in the database and get their user document
+  // Find the user to delete by ID (validated in middleware)
   const userToDelete = await User.findById(targetUserId);
 
   // Check if the user the request is trying to delete exists
   if (!userToDelete) {
-    return res.status(400).json({ message: 'User not found' });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   // All checks passed - delete the user
@@ -167,29 +165,24 @@ export const deleteUser = asyncHandler(async (req, res) => {
  *
  * Authenticates user credentials and returns a JWT if valid.
  */
-export const loginUser = async (req, res) => {
+export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  try {
-    // Find user by email
-    const user = await User.findOne({ email });
+  // Find user by email
+  const user = await User.findOne({ email });
 
-    // Simple password check (for demo only – use hashing in production)
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.status(200).json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        profileImage: user.profileImage,
-        token: generateToken(user._id),
-        message: 'Login successful',
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
-    }
-  } catch (err) {
-    console.error('❌ Login error:', err);
-    res.status(500).json({ message: 'Server error' });
+  // Simple password check (for demo only – use hashing in production)
+  if (user && (await bcrypt.compare(password, user.password))) {
+    res.status(200).json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      token: generateToken(user._id),
+      message: 'Login successful',
+    });
+  } else {
+    res.status(401).json({ message: 'Invalid email or password' });
   }
-};
+});
