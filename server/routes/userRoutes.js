@@ -15,10 +15,13 @@ import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
 const router = express.Router();
 
 // Protected Routes (require login)
-router
-  .route('/')
-  .get(protect, adminOnly, getAllUsers)
-  .delete(protect, selfOrAdmin, deleteUser);
+// @route   GET /api/users/profile
+// @desc    Get all users
+router.route('/').get(protect, adminOnly, getAllUsers);
+
+// @route   DELETE /api/users/profile
+// @desc    Delete logged-in user's profile
+router.delete('/profile', protect, selfOrAdmin, deleteUser);
 
 // @route   Patch /api/users/profile
 // @desc    Update logged-in user's profile
