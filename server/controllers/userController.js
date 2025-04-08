@@ -56,6 +56,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       email,
       password: hashedPassword,
       phone,
+      profileImage: req.body.profileImage,
     };
 
     // Create the user in the database
