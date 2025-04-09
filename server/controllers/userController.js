@@ -201,3 +201,27 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   }
   res.json(users);
 });
+
+/**
+ * @desc    Upload profile image
+ * @route   POST /api/users/upload-profile-image
+ * @access  Private
+ */
+export const uploadProfileImage = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image file provided' });
+  }
+
+  const imagePath = `${req.protocol}://${req.get(
+    'host'
+  )}/public/uploads/profile/${req.file.filename}`;
+
+  const user = await User.findById(req.user._id);
+  user.profileImage = imagePath;
+  await user.save();
+
+  res.status(200).json({
+    message: 'Profile image uploaded successfully',
+    profileImage: imagePath,
+  });
+});

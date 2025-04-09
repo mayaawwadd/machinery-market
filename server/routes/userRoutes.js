@@ -6,10 +6,12 @@ import {
   updateUser,
   deleteUser,
   getAllUsers,
+  uploadProfileImage,
 } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { adminOnly } from '../middleware/adminMiddleware.js';
 import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
+import { upload } from '../middleware/uploadMiddleware.js';
 
 // Create a new Express router instance
 const router = express.Router();
@@ -41,6 +43,15 @@ router.delete('/profile', protect, selfOrAdmin, deleteUser);
 // @route   GET /api/users/profile
 // @desc    Get all users
 router.route('/').get(protect, adminOnly, getAllUsers);
+
+// @route POST /api/users/upload-profile-image
+// @desc Upload profile image
+router.post(
+  '/uploaded-profile-image',
+  protect,
+  upload.single('image'),
+  uploadProfileImage
+);
 
 // Export the router
 export default router;
