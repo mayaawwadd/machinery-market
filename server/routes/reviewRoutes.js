@@ -5,6 +5,7 @@ import {
   getAllReviews,
   deleteReview,
   filterReviewsByRating,
+  getAverageRating,
 } from '../controllers/reviewController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
@@ -16,5 +17,6 @@ router.get('/seller/:sellerId', getSellerReviews);
 router.get('/', getAllReviews);
 router.delete('/', protect, selfOrAdmin, deleteReview);
 router.post('/filter-by-rating', filterReviewsByRating);
+router.post('/average', getAverageRating);
 
 export default router;

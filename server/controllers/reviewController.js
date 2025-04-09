@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Review from '../models/reviewModel.js';
 import asyncHandler from 'express-async-handler';
 
@@ -11,6 +12,16 @@ export const createReview = asyncHandler(async (req, res) => {
     return res
       .status(400)
       .json({ message: 'all required fields must be filled' });
+  }
+  //check if the user already submitted a review for this machine
+  const existingReview = await Review.findOne({
+    buyer: req.user._id,
+    machine,
+  });
+  if (existingReview) {
+    return res.status(400).json({
+      message: 'You have already submitted a review for this machine',
+    });
   }
   //fill the review
   const review = new Review({
@@ -99,4 +110,47 @@ export const filterReviewsByRating = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(reviews);
+});
+
+// @desc    get sellers average rating
+// @route   POST /api/reviews/average
+// @access  Private (buyer only)
+
+//this still doesnt work correctly in postman
+export const getAverageRating = asyncHandler(async (req, res) => {
+  const { seller, machine } = req.body;
+
+  if (!seller && !machine) {
+    return res
+      .status(400)
+      .json({ message: 'Provide either seller or machine ID' });
+  }
+
+  //if seller is provided matchCriteria becomes {seller : sellerId} else machine
+  const matchCriteria = {
+    seller: new mongoose.Types.ObjectId(seller),
+    machine: new mongoose.Types.ObjectId(machine),
+  };
+
+  const result = await Review.aggregate([
+    { $match: matchCriteria }, //this filter reviews either by seller or machine depends on whats sent
+    {
+      $group: {
+        //groups the matched reviews
+        _id: null,
+        averageRating: { $avg: '$rating' }, //calculates avg , avg is function in MongoDb
+        totalReviews: { $sum: 1 }, // for each matched document , increments 1
+      },
+    },
+  ]);
+
+  if (!result.length) {
+    return res
+      .status(404)
+      .json({ message: 'no reviews found for the given criteria' });
+  }
+  res.status(200).json({
+    averageRating: result[0].averageRating.toFixed(1), //to fixed makes it look nicer ex. 4.33333 to 4.3
+    totalReviews: result[0].totalReviews,
+  });
 });
