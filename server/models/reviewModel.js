@@ -32,6 +32,14 @@ const reviewSchema = new mongoose.Schema(
       minlength: [5, 'Comment must be at least 5 characters long'],
       trim: true,
     },
+    isFlagged: {
+      type: Boolean,
+      default: false,
+    },
+    flagReason: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

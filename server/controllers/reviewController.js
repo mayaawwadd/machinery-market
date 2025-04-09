@@ -49,11 +49,14 @@ export const getSellerReviews = asyncHandler(async (req, res) => {
     .populate('buyer', 'username email')
     .sort({ createdAt: -1 });
 
-  if (!reviews || reviews.length === 0) {
-    res.status(400).json({ message: 'no reviews available' });
+  //filter out flagged reviews
+  const visibleReviews = reviews.filter((r) => !r.isFlagged);
+
+  if (!visibleReviews.length) {
+    return res.status(400).json({ message: 'No visible reviews available' });
   }
 
-  res.status(200).json(reviews);
+  res.status(200).json(visibleReviews);
 });
 
 // @desc    Get all reviews
@@ -152,5 +155,30 @@ export const getAverageRating = asyncHandler(async (req, res) => {
   res.status(200).json({
     averageRating: result[0].averageRating.toFixed(1), //to fixed makes it look nicer ex. 4.33333 to 4.3
     totalReviews: result[0].totalReviews,
+  });
+});
+
+export const flagReview = asyncHandler(async (req, res) => {
+  const { _id, reason } = req.body;
+
+  if (!_id || !reason) {
+    return res
+      .status(400)
+      .json({ message: 'Review Id and reason are required' });
+  }
+
+  const review = await Review.findById(_id);
+  if (!review) {
+    return res.status(404).json({ message: 'Review not found' });
+  }
+  //flag the review and store the reason
+  review.isFlagged = true;
+  review.flagReason = reason;
+
+  const updated = await review.save();
+
+  res.status(200).json({
+    message: 'review flagged for moderation',
+    review: updated,
   });
 });
