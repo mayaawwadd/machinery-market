@@ -4,22 +4,6 @@ import asyncHandler from 'express-async-handler';
 import generateToken from '../utils/generateToken.js';
 
 /**
- * @desc    Retrieve all users
- * @route   GET /users
- * @access  Private
- *
- * This function retrieves all users from the database,
- * excluding their passwords, and returns them as JSON.
- */
-export const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select('-password').lean(); // .lean() returns plain JS objects for better performance
-  if (!users) {
-    return res.status(404).json({ message: 'No users found' });
-  }
-  res.json(users);
-});
-
-/**
  * @desc Register a new user and return token
  * @route POST /api/users/register
  * @access Public
@@ -80,6 +64,51 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Log in a user
+ * @route   POST /users/login
+ * @access  Public
+ *
+ * Authenticates user credentials and returns a JWT if valid.
+ */
+export const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Find user by email
+  const user = await User.findOne({ email });
+
+  // Simple password check (for demo only – use hashing in production)
+  if (user && (await bcrypt.compare(password, user.password))) {
+    res.status(200).json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      token: generateToken(user._id),
+      message: 'Login successful',
+    });
+  } else {
+    res.status(401).json({ message: 'Invalid email or password' });
+  }
+});
+
+/**
+ * @desc    Get logged-in user's profile
+ * @route   GET /api/users/profile
+ * @access  Private
+ */
+export const getUserProfile = asyncHandler(async (req, res) => {
+  // req.user is set by protect middleware
+  const user = await User.findById(req.user._id).select('-password');
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  res.status(200).json(user);
+});
+
+/**
  * @desc    Update a user
  * @route   PATCH /users
  * @access  Private
@@ -88,7 +117,6 @@ export const registerUser = asyncHandler(async (req, res) => {
  * the user’s existence, ensures the username is not duplicated,
  * and hashes the password if it's being updated.
  */
-
 export const updateUser = asyncHandler(async (req, res) => {
   const { username, email, phone, password } = req.body;
 
@@ -159,46 +187,41 @@ export const deleteUser = asyncHandler(async (req, res) => {
 });
 
 /**
- * @desc    Log in a user
- * @route   POST /users/login
- * @access  Public
+ * @desc    Retrieve all users
+ * @route   GET /users
+ * @access  Private
  *
- * Authenticates user credentials and returns a JWT if valid.
+ * This function retrieves all users from the database,
+ * excluding their passwords, and returns them as JSON.
  */
-export const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-
-  // Find user by email
-  const user = await User.findOne({ email });
-
-  // Simple password check (for demo only – use hashing in production)
-  if (user && (await bcrypt.compare(password, user.password))) {
-    res.status(200).json({
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      profileImage: user.profileImage,
-      token: generateToken(user._id),
-      message: 'Login successful',
-    });
-  } else {
-    res.status(401).json({ message: 'Invalid email or password' });
+export const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find().select('-password').lean(); // .lean() returns plain JS objects for better performance
+  if (!users) {
+    return res.status(404).json({ message: 'No users found' });
   }
+  res.json(users);
 });
 
 /**
- * @desc    Get logged-in user's profile
- * @route   GET /api/users/profile
+ * @desc    Upload profile image
+ * @route   POST /api/users/upload-profile-image
  * @access  Private
  */
-export const getProfile = asyncHandler(async (req, res) => {
-  // req.user is set by protect middleware
-  const user = await User.findById(req.user._id).select('-password');
-
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+export const uploadProfileImage = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image file provided' });
   }
 
-  res.status(200).json(user);
+  const imagePath = `${req.protocol}://${req.get(
+    'host'
+  )}/public/uploads/profile/${req.file.filename}`;
+
+  const user = await User.findById(req.user._id);
+  user.profileImage = imagePath;
+  await user.save();
+
+  res.status(200).json({
+    message: 'Profile image uploaded successfully',
+    profileImage: imagePath,
+  });
 });
