@@ -75,3 +75,28 @@ export const deleteReview = asyncHandler(async (req, res) => {
   await review.deleteOne();
   res.status(200).json({ message: 'review deleted successfully' });
 });
+
+// @desc    filter review by rating
+// @route   POST /api/reviews/filter-by-rating
+// @access  Private (buyer only)
+export const filterReviewsByRating = asyncHandler(async (req, res) => {
+  const { rating } = req.body;
+
+  //validate rating input
+  if (rating === undefined || rating < 1 || rating > 5) {
+    return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+  }
+
+  const reviews = await Review.find({ rating })
+    .populate('buyer', 'username email')
+    .sort({ createdAt: -1 });
+
+  //check if reviews of that rating is available
+  if (!reviews.length) {
+    return res
+      .status(404)
+      .json({ message: 'no reviews found for this rating' });
+  }
+
+  res.status(200).json(reviews);
+});
