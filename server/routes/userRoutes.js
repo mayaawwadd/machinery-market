@@ -47,7 +47,7 @@ router.route('/').get(protect, adminOnly, getAllUsers);
 // @route POST /api/users/upload-profile-image
 // @desc Upload profile image
 router.post(
-  '/uploaded-profile-image',
+  '/upload-profile-image',
   protect,
   upload.single('image'),
   uploadProfileImage
