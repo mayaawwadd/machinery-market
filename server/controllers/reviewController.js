@@ -60,4 +60,18 @@ export const getAllReviews = asyncHandler(async (req, res) => {
 // @desc    Delete a review
 // @route   DELETE /api/reviews/:id
 // @access  Admin or Review Owner
-export const deleteReview = asyncHandler(async (req, res) => {});
+export const deleteReview = asyncHandler(async (req, res) => {
+  const { _id: reviewId } = req.body;
+
+  if (!reviewId) {
+    res.status(400).json({ message: 'review ID is required' });
+  }
+
+  const review = await Review.findById(reviewId);
+
+  if (!review) {
+    res.status(400).json({ message: 'Review not found' });
+  }
+  await review.deleteOne();
+  res.status(200).json({ message: 'review deleted successfully' });
+});
