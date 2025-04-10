@@ -7,7 +7,7 @@ import User from '../models/userModel.js';
  */
 
 export const selfOrAdmin = async (req, res, next) => {
-  const { id: targetUserId } = req.body;
+  const targetUserId = req.params.id || req.body.id || req.body._id;
   const currentUserId = req.user._id.toString();
   const isAdmin = req.user.role === 'admin';
 
