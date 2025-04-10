@@ -36,9 +36,9 @@ router.get('/profile', protect, getUserProfile);
 // @desc    Update logged-in user's profile
 router.patch('/profile', protect, updateUser);
 
-// @route   DELETE /api/users/profile
+// @route   DELETE /api/users/:id
 // @desc    Delete logged-in user's profile
-router.delete('/profile', protect, selfOrAdmin, deleteUser);
+router.delete('/:id', protect, selfOrAdmin, deleteUser);
 
 // @route   GET /api/users/profile
 // @desc    Get all users
