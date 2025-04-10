@@ -17,7 +17,7 @@ const router = express.Router();
 router.post('/', protect, createReview);
 router.get('/seller/:sellerId', getSellerReviews);
 router.get('/', getAllReviews);
-router.delete('/', protect, selfOrAdmin, deleteReview);
+router.delete('/:id', protect, selfOrAdmin, deleteReview);
 router.post('/filter-by-rating', filterReviewsByRating);
 router.post('/average', getAverageRating);
 router.patch('/flag', protect, adminOnly, flagReview);
