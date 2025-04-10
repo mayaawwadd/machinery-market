@@ -8,6 +8,12 @@ import asyncHandler from 'express-async-handler';
 export const createReview = asyncHandler(async (req, res) => {
   const { seller, machine, rating, comment } = req.body;
 
+  if (seller === req.user._id.toString()) {
+    return res.status(403).json({
+      message: 'You cannot review yourself',
+    });
+  }
+
   if (!rating || !comment || !seller) {
     return res
       .status(400)
