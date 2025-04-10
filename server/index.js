@@ -31,7 +31,7 @@ app.use('/api/machinery', machineryRoutes);
 app.use('/api/reviews', reviewRoutes);
 
 // Test route
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.send('🚀 API is running...');
 });
 
