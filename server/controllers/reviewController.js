@@ -131,19 +131,22 @@ export const getAverageRating = asyncHandler(async (req, res) => {
   }
 
   //if seller is provided matchCriteria becomes {seller : sellerId} else machine
-  const matchCriteria = {
-    seller: new mongoose.Types.ObjectId(seller),
-    machine: new mongoose.Types.ObjectId(machine),
-  };
+  let matchCriteria = {};
+
+  if (seller) {
+    matchCriteria = { seller: new mongoose.Types.ObjectId(seller) };
+  } else if (machine) {
+    matchCriteria = { machine: new mongoose.Types.ObjectId(machine) };
+  }
 
   const result = await Review.aggregate([
-    { $match: matchCriteria }, //this filter reviews either by seller or machine depends on whats sent
+    { $match: matchCriteria }, // This filter reviews either by seller or machine depends on whats sent
     {
       $group: {
         //groups the matched reviews
         _id: null,
-        averageRating: { $avg: '$rating' }, //calculates avg , avg is function in MongoDb
-        totalReviews: { $sum: 1 }, // for each matched document , increments 1
+        averageRating: { $avg: '$rating' }, // Calculates avg , avg is function in MongoDb
+        totalReviews: { $sum: 1 }, // For each matched document , increments 1
       },
     },
   ]);
@@ -151,7 +154,7 @@ export const getAverageRating = asyncHandler(async (req, res) => {
   if (!result.length) {
     return res
       .status(404)
-      .json({ message: 'no reviews found for the given criteria' });
+      .json({ message: 'No reviews found for the given criteria' });
   }
   res.status(200).json({
     averageRating: result[0].averageRating.toFixed(1), //to fixed makes it look nicer ex. 4.33333 to 4.3
