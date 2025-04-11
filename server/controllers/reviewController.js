@@ -8,6 +8,12 @@ import asyncHandler from 'express-async-handler';
 export const createReview = asyncHandler(async (req, res) => {
   const { seller, machine, rating, comment } = req.body;
 
+  if (seller === req.user._id.toString()) {
+    return res.status(403).json({
+      message: 'You cannot review yourself',
+    });
+  }
+
   if (!rating || !comment || !seller) {
     return res
       .status(400)
@@ -75,10 +81,10 @@ export const getAllReviews = asyncHandler(async (req, res) => {
 // @route   DELETE /api/reviews/:id
 // @access  Admin or Review Owner
 export const deleteReview = asyncHandler(async (req, res) => {
-  const { _id: reviewId } = req.body;
+  const { _id: reviewId } = req.params;
 
   if (!reviewId) {
-    res.status(400).json({ message: 'review ID is required' });
+    res.status(400).json({ message: 'Review ID is required' });
   }
 
   const review = await Review.findById(reviewId);
@@ -86,8 +92,9 @@ export const deleteReview = asyncHandler(async (req, res) => {
   if (!review) {
     res.status(400).json({ message: 'Review not found' });
   }
+
   await review.deleteOne();
-  res.status(200).json({ message: 'review deleted successfully' });
+  res.status(200).json({ message: 'Review deleted successfully' });
 });
 
 // @desc    filter review by rating
@@ -130,19 +137,22 @@ export const getAverageRating = asyncHandler(async (req, res) => {
   }
 
   //if seller is provided matchCriteria becomes {seller : sellerId} else machine
-  const matchCriteria = {
-    seller: new mongoose.Types.ObjectId(seller),
-    machine: new mongoose.Types.ObjectId(machine),
-  };
+  let matchCriteria = {};
+
+  if (seller) {
+    matchCriteria = { seller: new mongoose.Types.ObjectId(seller) };
+  } else if (machine) {
+    matchCriteria = { machine: new mongoose.Types.ObjectId(machine) };
+  }
 
   const result = await Review.aggregate([
-    { $match: matchCriteria }, //this filter reviews either by seller or machine depends on whats sent
+    { $match: matchCriteria }, // This filter reviews either by seller or machine depends on whats sent
     {
       $group: {
         //groups the matched reviews
         _id: null,
-        averageRating: { $avg: '$rating' }, //calculates avg , avg is function in MongoDb
-        totalReviews: { $sum: 1 }, // for each matched document , increments 1
+        averageRating: { $avg: '$rating' }, // Calculates avg , avg is function in MongoDb
+        totalReviews: { $sum: 1 }, // For each matched document , increments 1
       },
     },
   ]);
@@ -150,7 +160,7 @@ export const getAverageRating = asyncHandler(async (req, res) => {
   if (!result.length) {
     return res
       .status(404)
-      .json({ message: 'no reviews found for the given criteria' });
+      .json({ message: 'No reviews found for the given criteria' });
   }
   res.status(200).json({
     averageRating: result[0].averageRating.toFixed(1), //to fixed makes it look nicer ex. 4.33333 to 4.3

@@ -167,8 +167,8 @@ export const updateUser = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const deleteUser = asyncHandler(async (req, res) => {
-  // Get the ID of the user to be deleted from the request body
-  const { _id: targetUserId } = req.body;
+  // Get the ID of the user to be deleted from the request parameters
+  const { _id: targetUserId } = req.params;
 
   // Find the user to delete by ID (validated in middleware)
   const userToDelete = await User.findById(targetUserId);
