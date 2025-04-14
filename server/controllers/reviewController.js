@@ -125,8 +125,6 @@ export const filterReviewsByRating = asyncHandler(async (req, res) => {
 // @desc    get sellers average rating
 // @route   POST /api/reviews/average
 // @access  Private (buyer only)
-
-//this still doesnt work correctly in postman
 export const getAverageRating = asyncHandler(async (req, res) => {
   const { seller, machine } = req.body;
 

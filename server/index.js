@@ -11,6 +11,7 @@ import connectDB from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import machineryRoutes from './routes/machineryRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import transactionRoutes from './routes/transactionRoutes.js';
 
 // Initialize Express app
 const app = express();
@@ -29,6 +30,7 @@ app.use('/public', express.static('public'));
 app.use('/api/users', userRoutes);
 app.use('/api/machinery', machineryRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Test route
 app.get('/api', (req, res) => {
