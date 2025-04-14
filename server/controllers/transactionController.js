@@ -65,3 +65,50 @@ export const purchaseMachinery = asyncHandler(async (req, res) => {
     transaction: createdTransaction,
   });
 });
+
+export const updateTransactionStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const { id } = req.params;
+
+  //check if the status given are valid
+  const validStates = ['pending', 'completed', 'failed', 'cancelled'];
+  if (!validStates.includes(status)) {
+    return res.status(400).json({ message: 'invalid transaction' });
+  }
+
+  const transaction = await Transaction.findById(id);
+  if (!transaction) {
+    return res.status(404).json({ message: 'Transaction not found' });
+  }
+
+  transaction.paymentStatus = status;
+  await transaction.save();
+
+  res.status(200).json({
+    message: 'Transaction status updated successfully',
+    transaction,
+  });
+});
+
+export const getUserTransactions = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  const transaction = await Transaction.find({ buyer: userId })
+    .populate('machinery', 'title price')
+    .sort({ createdAt: -1 });
+
+  if (!transaction.length) {
+    return res.status(404).json({ message: 'Transaction not found' });
+  }
+
+  res.status(200).json(transaction);
+});
+
+export const getAllTransactions = asyncHandler(async (req, res) => {
+  const transaction = await Transaction.find();
+
+  if (!transaction) {
+    return res.status(400).json({ message: 'no transactions available' });
+  }
+  res.status(200).json(transaction);
+});
