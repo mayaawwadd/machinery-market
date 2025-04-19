@@ -4,14 +4,17 @@ import Footer from '../components/Footer';
 
 function HomeLayout() {
   const location = useLocation();
-  // Array of pages that should not include a footer
-  const hideFooterRoutes = ['/login', '/register', '/dashboard'];
-  // Boolean variable for the pages that should include a footer (check if the page is in HideFooterRoutes)
+  // Array of pages that should not include a footer/navbar
+  const hideNavbarRoutes = ['/login', '/register'];
+  const hideFooterRoutes = ['/login', '/register', '/profile'];
+
+  // Boolean variable for the pages that should include a footer/navbar
+  const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
   const shouldShowFooter = !hideFooterRoutes.includes(location.pathname);
 
   return (
     <>
-      <Navbar />
+      {shouldShowNavbar && <Navbar />}
 
       <main className="p-4">
         <Outlet />
