@@ -13,20 +13,24 @@ export const AuthProvider = ({ children }) => {
 
   // Load from localStorage/sessionStorage on mount
   useEffect(() => {
-    const token =
+    const storedToken =
       localStorage.getItem('token') || sessionStorage.getItem('token');
-    const userData =
+
+    const storedUserRaw =
       localStorage.getItem('user') || sessionStorage.getItem('user');
 
-    if (token) setToken(token);
+    if (storedToken) setToken(storedToken);
 
-    if (userData) {
+    if (storedUserRaw && storedUserRaw !== 'undefined') {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(storedUserRaw);
+        setUser(parsedUser);
       } catch (error) {
-        console.error('Failed to parse stored user:', error);
+        console.error('❌ Failed to parse user JSON:', error);
         setUser(null);
       }
+    } else {
+      setUser(null); // Clear it if invalid
     }
   }, []);
 
