@@ -59,6 +59,7 @@
   padding: 16px;
   margin-bottom: 16px;
   outline: none;
+  color: #292738;
   border: 2px solid #e4e4e4;
   transition: all 200ms ease-in-out;
 }

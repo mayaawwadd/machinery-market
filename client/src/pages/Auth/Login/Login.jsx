@@ -7,7 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { showSuccess, showInfo } from '../../../utils/toast';
 import { handleApiError } from '../../../utils/errorHandler';
 import Image from '../../../assets/machineryImage.png';
-import styles from '../Login/login.module.css';
+import styles from './login.module.css';
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
