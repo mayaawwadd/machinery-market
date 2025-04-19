@@ -171,3 +171,33 @@
 .loginBottomP a:hover {
   text-decoration: underline;
 }
+
+@media screen and (max-width: 900px) {
+  .loginLeft {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 390px) {
+  .loginCenterOptions {
+    flex-direction: column;
+    align-items: center;
+    row-gap: 0.6rem;
+  }
+
+  .loginCenterButtons {
+    margin-top: 1.2rem;
+  }
+
+  .loginCenter h2 {
+    font-size: 1.8rem;
+  }
+
+  .loginCenter p {
+    font-size: 0.9rem;
+  }
+
+  .rememberDiv {
+    column-gap: 0.35rem;
+  }
+}
