@@ -1,9 +1,9 @@
-.container {
+.registerMain {
   display: flex;
   color: #292738;
 }
 
-.loginLeft {
+.registerLeft {
   height: 100vh;
   flex-grow: 1;
   display: flex;
@@ -11,17 +11,17 @@
   align-items: center;
 }
 
-.loginLeft img {
+.registerLeft img {
   width: 30rem;
   max-width: 100%;
 }
 
-.loginRight {
+.registerRight {
   height: 100vh;
   flex-grow: 1;
 }
 
-.loginRightContainer {
+.registerRightContainer {
   height: 100%;
   width: 80%;
   margin: 0 auto;
@@ -30,35 +30,40 @@
   justify-content: center;
 }
 
-.loginRight form {
+.registerRight form {
   display: flex;
   flex-direction: column;
 }
 
-.loginLogo {
+.registerLogo {
   align-self: center;
   padding-top: 3.125rem;
 }
 
-.loginCenter {
+.registerCenter {
   margin: auto 0;
   text-align: center;
 }
 
-.loginCenter h2 {
-  font-size: 35px;
+.registerCenter h2 {
+  font-size: 30px;
 }
 
-.loginCenter p {
+.registerCenter p {
   font-weight: 400;
   font-size: 20px;
   margin-bottom: 40px;
 }
 
+.inputGroup {
+  display: flex;
+  column-gap: 0.5rem;
+}
+
 .formInput {
   width: 100%;
   padding: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 13px;
   outline: none;
   color: #292738;
   border: 2px solid #e4e4e4;
@@ -71,6 +76,7 @@
 }
 
 .passwordInputDiv {
+  width: 100%;
   position: relative;
 }
 
@@ -84,42 +90,19 @@
   outline: none;
 }
 
-.loginCenterOptions {
+.registerCenterOptions {
   display: flex;
   justify-content: space-between;
 }
 
-.rememberDiv {
-  display: flex;
-  align-items: center;
-  column-gap: 0.5rem;
-}
-
-.rememberDiv label {
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.forgotPasswordLink {
-  text-decoration: none;
-  font-size: 0.9rem;
-  color: #292738;
-  transition: all 200ms ease-in-out;
-}
-
-.forgotPasswordLink:hover {
-  cursor: pointer;
-  text-decoration: underline;
-}
-
-.loginCenterButtons {
-  margin-top: 2.5rem;
+.registerCenterButtons {
+  margin-top: 1.5rem;
   display: flex;
   flex-direction: column;
   row-gap: 1rem;
 }
 
-.loginCenterButtons button {
+.registerCenterButtons button {
   border: none;
   border-radius: 1.5rem;
   font-size: 0.9rem;
@@ -128,17 +111,17 @@
   transition: all 200ms ease-in;
 }
 
-.loginCenterButtons button:nth-child(1) {
+.registerCenterButtons button:nth-child(1) {
   background-color: #292738;
   color: white;
   line-height: 1.4rem;
 }
 
-.loginCenterButtons button:nth-child(1):hover {
+.registerCenterButtons button:nth-child(1):hover {
   background-color: rgba(41, 39, 56, 0.95);
 }
 
-.loginCenterButtons button:nth-child(2) {
+.registerCenterButtons button:nth-child(2) {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -148,21 +131,21 @@
   background-color: #f0f0f0;
 }
 
-.loginCenterButtons button:nth-child(2) svg {
+.registerCenterButtons button:nth-child(2) svg {
   font-size: 1.5rem;
 }
 
-.loginCenterButtons button:nth-child(2):hover {
+.registerCenterButtons button:nth-child(2):hover {
   background-color: rgba(196, 196, 196, 0.5);
 }
 
-.loginBottomP {
+.registerBottomP {
   text-align: center;
   font-size: 15px;
   padding-bottom: 40px;
 }
 
-.loginBottomP a {
+.registerBottomP a {
   text-decoration: none;
   color: #292738;
   font-weight: bold;
@@ -170,36 +153,6 @@
   transition: all 200ms ease-in-out;
 }
 
-.loginBottomP a:hover {
+.registerBottomP a:hover {
   text-decoration: underline;
-}
-
-@media screen and (max-width: 900px) {
-  .loginLeft {
-    display: none;
-  }
-}
-
-@media screen and (max-width: 390px) {
-  .loginCenterOptions {
-    flex-direction: column;
-    align-items: center;
-    row-gap: 0.6rem;
-  }
-
-  .loginCenterButtons {
-    margin-top: 1.2rem;
-  }
-
-  .loginCenter h2 {
-    font-size: 1.8rem;
-  }
-
-  .loginCenter p {
-    font-size: 0.9rem;
-  }
-
-  .rememberDiv {
-    column-gap: 0.35rem;
-  }
 }
