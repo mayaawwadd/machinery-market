@@ -2,15 +2,59 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-import { loginUser } from '../../../services/authService';
+import { registerUser } from '../../../services/authService';
 import { useAuth } from '../../../context/AuthContext';
-import { showSuccess, showInfo } from '../../../utils/toast';
+import { showSuccess, showError } from '../../../utils/toast';
 import { handleApiError } from '../../../utils/errorHandler';
 import Image from '../../../assets/machineryImage.png';
 import styles from './register.module.css';
 
 function Register() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+
+    const newUser = {
+      username: form.username.value,
+      email: form.email.value,
+      password: form.password.value,
+      phone: form.phone.value,
+    };
+
+    const confirmPassword = form.confirmPassword.value;
+
+    if (newUser.password != confirmPassword) {
+      showError('Passwords do not match');
+      return;
+    }
+
+    try {
+      const data = await registerUser(newUser);
+      login(
+        {
+          _id: data._id,
+          username: data.username,
+          email: data.email,
+          role: data.role,
+          profileImage: data.profileImage,
+        },
+        data.token,
+        true
+      );
+
+      showSuccess('Registration successful!');
+      navigate('/profile');
+    } catch (error) {
+      console.log(error);
+      handleApiError(error, 'Registration failed.');
+    }
+  };
 
   return (
     <div className={styles.registerMain}>
@@ -25,22 +69,7 @@ function Register() {
           <div className={styles.registerCenter}>
             <h2>Welcome to our website!</h2>
             <p>Please enter your details</p>
-            <form action="">
-              {/* <div className={styles.nameDiv}>
-                <input
-                  type="text"
-                  placeholder="First Name"
-                  name="firstName"
-                  required={true}
-                />
-                <input
-                  type="text"
-                  placeholder="Last Name"
-                  name="lastName"
-                  required={true}
-                />
-              </div> */}
-
+            <form onSubmit={handleRegisterSubmit}>
               <div className={styles.inputGroup}>
                 <input
                   className={styles.formInput}
@@ -62,7 +91,7 @@ function Register() {
                 className={styles.formInput}
                 type="email"
                 placeholder="Email"
-                name="Email"
+                name="email"
                 required
               />
 
@@ -94,22 +123,22 @@ function Register() {
                 <div className={styles.passwordInputDiv}>
                   <input
                     className={styles.formInput}
-                    type={showPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm Password"
                     name="confirmPassword"
                     required
                   />
 
-                  {showPassword ? (
+                  {showConfirmPassword ? (
                     <FaEyeSlash
                       onClick={() => {
-                        setShowPassword(!showPassword);
+                        setShowConfirmPassword(!showConfirmPassword);
                       }}
                     />
                   ) : (
                     <FaEye
                       onClick={() => {
-                        setShowPassword(!showPassword);
+                        setShowConfirmPassword(!showConfirmPassword);
                       }}
                     />
                   )}
