@@ -156,3 +156,34 @@
 .registerBottomP a:hover {
   text-decoration: underline;
 }
+
+@media screen and (max-width: 900px) {
+  .registerLeft {
+    display: none;
+  }
+
+  .inputGroup {
+    flex-direction: column;
+    row-gap: 0.5rem;
+  }
+}
+
+@media screen and (max-width: 390px) {
+  .registerCenterOptions {
+    flex-direction: column;
+    align-items: center;
+    row-gap: 0.6rem;
+  }
+
+  .registerCenterButtons {
+    margin-top: 1.2rem;
+  }
+
+  .registerCenter h2 {
+    font-size: 1.8rem;
+  }
+
+  .registerCenter p {
+    font-size: 0.9rem;
+  }
+}
