@@ -127,7 +127,7 @@
   align-items: center;
   column-gap: 0.5rem;
   color: #292738;
-  font-weight: bold;
+  /* font-weight: bold; */
   background-color: #f0f0f0;
 }
 
