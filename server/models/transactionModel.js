@@ -45,7 +45,11 @@ const transactionSchema = new mongoose.Schema(
     },
 
     //specific to PayPal
-    paypalTransactionId: {
+    paypalCaptureId: {
+      type: String,
+      default: null,
+    },
+    paypalOrderId: {
       type: String,
       default: null,
     },

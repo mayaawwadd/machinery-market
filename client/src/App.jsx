@@ -1,7 +1,13 @@
+import React from 'react';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+import CancelPayment from './pages/cancelPayment';
+import CompletePayment from './pages/completePayment';
+import PaypalPayment from './components/paypalPayment';
 
 // Import all pages
 import HomeLayout from './pages/HomeLayout';
@@ -19,6 +25,11 @@ const router = createBrowserRouter([
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
       { path: 'profile', element: <Profile /> },
+
+      //paypal flow
+      { path: 'paypal', element: <PaypalPayment /> },
+      { path: 'complete-payment', element: <CompletePayment /> },
+      { path: 'cancel-payment', element: <CancelPayment /> },
     ],
   },
 ]);
