@@ -24,7 +24,10 @@ function Login() {
     try {
       const data = await loginUser(email, password);
 
-      login(data.user, data.token, rememberMe);
+      // Separate token and user data
+      const { token, message, ...userWithoutToken } = data;
+
+      login(userWithoutToken, token, rememberMe);
       showSuccess('Login successful!');
 
       navigate('/profile');

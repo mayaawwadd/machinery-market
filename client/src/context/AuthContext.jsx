@@ -36,13 +36,10 @@ export const AuthProvider = ({ children }) => {
 
   // Login handler
   const login = (userData, tokenData, rememberMe) => {
-    if (rememberMe) {
-      localStorage.setItem('token', tokenData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } else {
-      sessionStorage.setItem('token', tokenData);
-      sessionStorage.setItem('user', JSON.stringify(userData));
-    }
+    const storage = rememberMe ? localStorage : sessionStorage;
+
+    storage.setItem('token', tokenData);
+    storage.setItem('user', JSON.stringify(userData));
 
     setUser(userData);
     setToken(tokenData);

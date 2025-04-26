@@ -57,7 +57,7 @@ function Register() {
   };
 
   return (
-    <div className={styles.registerMain}>
+    <div className={styles.container}>
       <div className={styles.registerLeft}>
         <img src={Image} alt="Machinery Illustration" />
       </div>
