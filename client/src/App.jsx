@@ -1,20 +1,18 @@
 import React from 'react';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-import CancelPayment from './pages/cancelPayment';
-import CompletePayment from './pages/completePayment';
-import PaypalPayment from './components/paypalPayment';
+import { createTheme, colors } from '@mui/material';
 
 // Import all pages
-import HomeLayout from './pages/HomeLayout';
+import HomeLayout from './layouts/HomeLayout';
 import Landing from './pages/Landing';
 import Login from './pages/Auth/login/Login';
 import Register from './pages/Auth/register/Register';
 import Profile from './pages/Profile';
+import CancelPayment from './pages/cancelPayment';
+import CompletePayment from './pages/completePayment';
+import PaypalPayment from './components/payment/paypalPayment';
 
 const router = createBrowserRouter([
   {
@@ -33,6 +31,14 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+const theme = createTheme({
+  palette: {
+    secondary: {
+      main: colors.orange[500],
+    },
+  },
+});
 
 function App() {
   return (
