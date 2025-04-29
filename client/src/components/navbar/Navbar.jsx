@@ -27,19 +27,18 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 const navItems = ['Buy', 'Sell', 'Auctions'];
 
 function Navbar() {
   const { user, logout } = useAuth();
-  const [mode, setMode] = React.useState('light');
+  const { mode, toggleMode } = useTheme();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
-  const toggleMode = () =>
-    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
   const drawer = (
