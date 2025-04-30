@@ -21,6 +21,7 @@ import { useTheme as useAppTheme } from '../../../context/ThemeContext';
 import { showSuccess, showError } from '../../../utils/toast';
 import { handleApiError } from '../../../utils/errorHandler';
 import welcomeImage from '../../../assets/welcomeImage.png';
+import welcomeImageDark from '../../../assets/welcomeImageDark.png';
 
 function Register() {
   const [showPassword, setShowPassword] = useState(false);
