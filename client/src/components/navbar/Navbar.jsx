@@ -17,6 +17,7 @@ import {
   ListItemText,
   Divider,
   Button,
+  useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -27,19 +28,26 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme as useAppTheme } from '../../context/ThemeContext';
 
 const navItems = ['Buy', 'Sell', 'Auctions'];
 
 function Navbar() {
   const { user, logout } = useAuth();
-  const { mode, toggleMode } = useTheme();
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { mode, toggleMode } = useAppTheme();
 
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+
+  const hoverColor =
+    mode === 'light'
+      ? theme.palette.primary[400]
+      : theme.palette.primary[600];
+
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center', p: 2 }}>
@@ -58,9 +66,19 @@ function Navbar() {
         <Divider />
         {!user && (
           <>
-            <ListItemButton component={Link} to="/login">
-              <ListItemText primary="Login" />
-            </ListItemButton>
+            <ListItem>
+              <Button
+                component={Link}
+                to="/login"
+                variant="contained"
+                fullWidth
+                size="small"
+                sx={{ borderRadius: '999px', fontWeight: 'bold' }}
+              >
+                Login
+              </Button>
+            </ListItem>
+
             {/* <ListItemButton component={Link} to="/register">
               <ListItemText primary="Register" />
             </ListItemButton> */}
@@ -74,11 +92,12 @@ function Navbar() {
     <>
       <AppBar
         position="fixed"
+        color='transparent'
         sx={{
-          backgroundColor: 'white',
+          backgroundColor: theme.palette.background.default,
           border: 'none',
-          boxShadow: 'none',
-          color: '#292738',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+          color: theme.palette.text.primary,
         }}
         component="nav"
       >
@@ -91,7 +110,7 @@ function Navbar() {
           </Box>
 
           {/* Center: Links (Hidden on xs) */}
-          <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 4 }}>
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4 }}>
             {navItems.map((item) => (
               <Typography
                 key={item}
@@ -104,7 +123,15 @@ function Navbar() {
           </Box>
 
           {/* Right: Theme toggle + Auth-related */}
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconButton
+              onClick={toggleMode}
+              size="small"
+              color="inherit"
+            >
+              {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
+            </IconButton>
+
             {user ? (
               <Tooltip title="Account settings">
                 <Button
@@ -131,7 +158,7 @@ function Navbar() {
                     variant="body2"
                     sx={{
                       fontWeight: 500,
-                      display: { xs: 'none', sm: 'inline' }, // Hide username on mobile
+                      display: { xs: 'none', md: 'inline' }, // Hide username on mobile
                     }}
                   >
                     {user.username}
@@ -142,16 +169,17 @@ function Navbar() {
               <Stack
                 direction="row"
                 spacing={2}
-                sx={{ display: { xs: 'none', sm: 'flex' } }}
+                sx={{ display: { xs: 'none', md: 'flex' } }}
               >
-                <Typography
+                <Button
                   component={Link}
                   to="/login"
-                  variant="button"
-                  sx={{ textDecoration: 'none', color: 'inherit' }}
+                  variant="contained"
+                  size='small'
+                  sx={{ borderRadius: '999px', fontWeight: 'bold' }}
                 >
                   Login
-                </Typography>
+                </Button>
                 {/* <Typography
                   component={Link}
                   to="/register"
@@ -168,7 +196,7 @@ function Navbar() {
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ display: { sm: 'none' }, mr: 2 }}
+              sx={{ display: { md: 'none' }, mr: 2 }}
             >
               <MenuIcon />
             </IconButton>
@@ -185,28 +213,10 @@ function Navbar() {
             <MenuItem disabled>
               <Typography
                 variant="subtitle1"
-                sx={{ display: { xs: 'inline', sm: 'none' } }}
+                sx={{ display: { xs: 'inline', md: 'none' } }}
               >
                 {user?.username}
               </Typography>
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                toggleMode();
-                handleMenuClose();
-              }}
-            >
-              {mode === 'light' ? (
-                <>
-                  <DarkModeIcon fontSize="small" sx={{ mr: 1 }} />
-                  Dark Mode
-                </>
-              ) : (
-                <>
-                  <LightModeIcon fontSize="small" sx={{ mr: 1 }} />
-                  Light Mode
-                </>
-              )}
             </MenuItem>
 
             <MenuItem onClick={handleMenuClose}>
@@ -217,6 +227,7 @@ function Navbar() {
               <NotificationsIcon fontSize="small" sx={{ mr: 1 }} />
               Notifications
             </MenuItem>
+
             <MenuItem
               onClick={() => {
                 logout();
@@ -240,7 +251,7 @@ function Navbar() {
             keepMounted: true,
           }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
+            display: { xs: 'block', md: 'none' },
             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 240 },
           }}
         >
