@@ -100,9 +100,19 @@ function Register() {
           alignItems: 'center',
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: 700, mt: 2, mb: 1 }}>
-          .MACHINERY MARKET
-        </Typography>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              mt: 2,
+              mb: 1,
+              color: theme.palette.text.primary,
+            }}
+          >
+            .MACHINERY MARKET
+          </Typography>
+        </Link>
 
         <Box
           component="form"
