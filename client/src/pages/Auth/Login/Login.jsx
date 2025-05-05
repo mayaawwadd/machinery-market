@@ -1,19 +1,37 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import {
+  Box,
+  Button,
+  Checkbox,
+  Container,
+  InputLabel,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  FormControl,
+  Typography,
+  OutlinedInput,
+  useTheme,
+} from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { FcGoogle } from 'react-icons/fc';
 import { loginUser } from '../../../services/authService';
 import { useAuth } from '../../../context/AuthContext';
+import { useTheme as useAppTheme } from '../../../context/ThemeContext';
 import { showSuccess, showInfo } from '../../../utils/toast';
 import { handleApiError } from '../../../utils/errorHandler';
-import Image from '../../../assets/machineryImage.png';
-import styles from '../Login/login.module.css';
+import welcomeImage from '../../../assets/welcomeImage.png';
+import welcomeImageDark from '../../../assets/welcomeImageDark.png';
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const theme = useTheme();
+  const { mode } = useAppTheme();
+  const image = mode === 'dark' ? welcomeImageDark : welcomeImage;
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +42,10 @@ function Login() {
     try {
       const data = await loginUser(email, password);
 
-      login(data.user, data.token, rememberMe);
+      // Separate token and user data
+      const { token, message, ...userWithoutToken } = data;
+
+      login(userWithoutToken, token, rememberMe);
       showSuccess('Login successful!');
 
       navigate('/profile');
@@ -34,79 +55,160 @@ function Login() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.loginLeft}>
-        <img src={Image} alt="" />
-      </div>
-      <div className={styles.loginRight}>
-        <div className={styles.loginRightContainer}>
-          <div className={styles.loginLogo}>
-            <h4>.MACHINERY MARKET</h4>
-          </div>
-          <div className={styles.loginCenter}>
-            <h2>Welcome back!</h2>
-            <p>Please enter your details</p>
+    <Container
+      maxWidth="lg"
+      sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }}
+    >
+      <Box
+        flex={1}
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <img
+          src={image}
+          alt="Welcome Back"
+          style={{ width: '75%', height: '75%', objectFit: 'cover' }}
+        />
+      </Box>
 
-            <form action="" onSubmit={handleLoginSubmit}>
-              <input
-                className={styles.formInput}
-                type="email"
-                placeholder="Email"
-                name="email"
-                required
-              />
-              <div className={styles.passwordInputDiv}>
-                <input
-                  className={styles.formInput}
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Password"
-                  name="password"
-                  required
+      <Container
+        maxWidth="sm"
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              mt: 2,
+              mb: 1,
+              color: theme.palette.text.primary,
+            }}
+          >
+            .MACHINERY MARKET
+          </Typography>
+        </Link>
+
+
+        <Box
+          component="form"
+          onSubmit={handleLoginSubmit}
+          sx={{ mt: 1, width: '100%', px: 4 }}
+        >
+          <Typography variant="h6" gutterBottom>
+            Welcome back!
+          </Typography>
+          <Typography variant="body2" gutterBottom sx={{ lineHeight: 1.6 }}>
+            Please enter your details
+          </Typography>
+
+          <FormControl fullWidth required variant="outlined" sx={{ my: 2 }}>
+            <InputLabel htmlFor="email">Email</InputLabel>
+            <OutlinedInput id="email" name="email" label="Email" />
+          </FormControl>
+
+          <FormControl fullWidth required variant="outlined">
+            <InputLabel htmlFor="password">Password</InputLabel>
+            <OutlinedInput
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              label="Password"
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                    aria-label={
+                      showPassword ? 'Hide password' : 'Show password'
+                    }
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
+          </FormControl>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mt: 1,
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  color="primary"
                 />
+              }
+              label="Remember for 30 days"
+            />
 
-                {showPassword ? (
-                  <FaEyeSlash onClick={() => setShowPassword(!showPassword)} />
-                ) : (
-                  <FaEye onClick={() => setShowPassword(!showPassword)} />
-                )}
-              </div>
+            <Button
+              variant="text"
+              size="small"
+              sx={{
+                fontSize: '0.9rem',
+                color: theme.palette.primary.main,
+                textTransform: 'none',
+              }}
+              onClick={() => showInfo('Password reset coming soon!')}
+            >
+              Forgot Password?
+            </Button>
+          </Box>
 
-              <div className={styles.loginCenterOptions}>
-                <div className={styles.rememberDiv}>
-                  <input
-                    type="checkbox"
-                    id="remember-checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  <label htmlFor="remember-checkbox">
-                    Remember for 30 days
-                  </label>
-                </div>
-                <a href="#" className={styles.forgotPasswordLink}>
-                  Forgot Password?
-                </a>
-              </div>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2, borderRadius: '999px', fontWeight: 'bold' }}
+          >
+            Log In
+          </Button>
 
-              <div className={styles.loginCenterButtons}>
-                <button type="submit">Log In</button>
-                <button
-                  type="button"
-                  onClick={() => showInfo('Google login coming soon!')}
-                >
-                  <FcGoogle />
-                  Log In with Google
-                </button>
-              </div>
-            </form>
-          </div>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<FcGoogle />}
+            sx={{ mb: 3, borderRadius: '999px' }}
+            onClick={() => showInfo('Google login coming soon!')}
+          >
+            Log In with Google
+          </Button>
 
-          <p className={styles.loginBottomP}>
-            Don't have an account? <Link to="/register">Sign Up</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+          <Typography variant="body2" align="center">
+            Don’t have an account?{' '}
+            <Link
+              to="/register"
+              style={{
+                fontWeight: '500',
+                fontSize: '0.9rem',
+                color: theme.palette.primary.main,
+                textDecoration: 'none',
+              }}
+            >
+              Sign Up
+            </Link>
+          </Typography>
+        </Box>
+      </Container>
+    </Container>
   );
 }
 

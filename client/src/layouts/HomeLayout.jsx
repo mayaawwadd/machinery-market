@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import Navbar from '../components/navbar/Navbar';
 import Footer from '../components/Footer';
+import ThemedLayout from './ThemedLayout';
 
 function HomeLayout() {
   const location = useLocation();
@@ -14,13 +15,15 @@ function HomeLayout() {
 
   return (
     <>
-      {shouldShowNavbar && <Navbar />}
+      <ThemedLayout>
+        {shouldShowNavbar && <Navbar />}
 
-      <main className="p-4">
-        <Outlet />
-      </main>
+        <main className="p-4">
+          <Outlet />
+        </main>
 
-      {shouldShowFooter && <Footer />}
+        {shouldShowFooter && <Footer />}
+      </ThemedLayout>
     </>
   );
 }
