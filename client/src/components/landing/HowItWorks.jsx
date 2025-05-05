@@ -13,7 +13,6 @@ import {
     Paper,
     useTheme,
 } from '@mui/material';
-import { useTheme as useAppTheme } from '../../context/ThemeContext';
 
 const buyerSteps = [
     {
@@ -58,7 +57,7 @@ function HowItWorks() {
     const [activeStep, setActiveStep] = useState(0);
 
     const theme = useTheme();
-    const { mode } = useAppTheme();
+
 
     const steps = activeTab === 0 ? buyerSteps : sellerSteps;
 
