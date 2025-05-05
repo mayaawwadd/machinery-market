@@ -22,6 +22,9 @@ router.get('/', protect, adminOnly, getAllTransactions);
 // router.post('/paypal/capture-order', protect, capturePayPalOrder);
 
 router.post('/paypal/createOrderTest', createOrderTest);
-router.get('/paypal/capturePaymentTest/:paymentId', capturePaymentTest);
+router.post(
+  '/paypal/:transactionId/capturePaymentTest/:paymentId',
+  capturePaymentTest
+);
 
 export default router;

@@ -3,6 +3,9 @@ import React from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 
 const paypalPayment = () => {
+  //hardcoded tests
+  const transactionId = '67f96b113ad4e749bcdc1fe9';
+  const amountCents = 360;
   // 1) Configure the PayPal JS SDK
   const initialOptions = {
     'client-id': import.meta.env.VITE_PAYPAL_CLIENTID,
@@ -19,6 +22,7 @@ const paypalPayment = () => {
   // 3) Called when the buyer clicks “PayPal”
   const onCreateOrder = async () => {
     try {
+      console.log('OnCreateOrder fired');
       // hit your server’s PayPal “create order” endpoint
       const response = await fetch('/api/transactions/paypal/createOrderTest', {
         method: 'POST',
@@ -27,6 +31,10 @@ const paypalPayment = () => {
         },
         // if you need to pass any extra data (like a transactionId or amount):
         // body: JSON.stringify({ transactionId, amount }),
+        body: JSON.stringify({
+          transactionId,
+          amount: (amountCents / 100).toFixed(2),
+        }),
       });
 
       if (!response.ok) {
@@ -44,10 +52,11 @@ const paypalPayment = () => {
   // 4) Called when the buyer approves the payment in the popup
   const onApprove = async (data) => {
     try {
+      console.log('onApprove fired', data);
       if (!data?.orderID) throw new Error('invalid order ID');
 
       const response = await fetch(
-        `/api/transactions/paypal/capturePaymentTest/${data.orderID}`,
+        `/api/transactions/paypal/${transactionId}/capturePaymentTest/${data.orderID}`,
         {
           method: 'GET',
           headers: {
@@ -55,8 +64,12 @@ const paypalPayment = () => {
           },
         }
       );
+      if (!response.ok) {
+        throw new Error(`capture failed : ${response.status}`);
+      }
       const result = await response.json();
       window.location.href = '/complete-payment';
+      return result;
       // you can now call your server to capture the order, e.g.:
       // await fetch("/api/paypal/capture-order", {
       //   method: "POST",

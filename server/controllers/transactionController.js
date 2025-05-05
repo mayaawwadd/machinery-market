@@ -55,7 +55,7 @@ export const purchaseMachinery = asyncHandler(async (req, res) => {
     seller: machinery.seller._id,
     machinery: machinery._id,
     amountCents: machinery.priceCents,
-    currency: 'JOD',
+    currency: 'USD',
     paymentMethod,
     paymentStatus: 'pending',
     isPaid: false, //will be updated later
@@ -115,62 +115,7 @@ export const getAllTransactions = asyncHandler(async (req, res) => {
   }
   res.status(200).json(transaction);
 });
-
-/*export const createPayPalOrder = asyncHandler(async (req, res) => {
-  const { transactionId } = req.body;
-
-  const transaction = await Transaction.findById(transactionId).populate(
-    'machinery',
-    'price'
-  );
-  if (!transaction) {
-    return res.status(404).json({ message: 'Transaction Not found' });
-  }
-
-  const value = (transaction.amountCents / 100).toFixed(2);
-
-  //build the paypal order
-  const request = new checkoutNodeJssdk.orders.OrdersCreateRequest();
-  request.prefer('return=representation');
-  request.requestBody({
-    intent: 'CAPTURE',
-    purchase_units: [
-      {
-        reference_id: transactionId,
-        amount: {
-          currency_code: transaction.currency,
-          value,
-        },
-      },
-    ],
-  });
-  const order = await payPalClient.execute(request);
-  res.status(200).json({
-    orderId: order.result.id,
-    transactionId: transaction._id,
-  });
-});
-
-export const capturePayPalOrder = asyncHandler(async (req, res) => {
-  const { orderId, transactionId } = req.body;
-  const request = new checkoutNodeJssdk.orders.OrdersCaptureRequest(orderId);
-  request.requestBody({});
-
-  const capture = await payPalClient.execute(request);
-  if (capture.statusCode !== 200) {
-    return res.status(400).json({ message: 'Capture failed' });
-  }
-
-  await Transaction.findByIdAndUpdate(transactionId, {
-    status: 'completed',
-    isPaid: true,
-    paidAt: Date.now(),
-    paypalCaptureId: capture.result.purchase_units[0].payments.captures[0].id,
-  });
-
-  res.status(200).json({ message: 'Payment Captured', capture });
-});
-*/
+// get the paypal access token
 export const getAccessToken = async () => {
   try {
     const response = await got.post(
@@ -191,8 +136,30 @@ export const getAccessToken = async () => {
     throw new Error(err);
   }
 };
+
 export const createOrderTest = asyncHandler(async (req, res) => {
   try {
+    const { transactionId } = req.body;
+    if (!transactionId) {
+      return res.status(400).json({ message: 'Transaction ID is required' });
+    }
+
+    const transaction = await Transaction.findById(transactionId)
+      .populate('machinery', 'title equipmentDetails')
+      .lean();
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction Not found' });
+    }
+
+    // derive unit price, etc.
+    const unitValue = (transaction.amountCents / 100).toFixed(2);
+    const currencyCode = 'USD';
+    const name = transaction.machinery.title;
+    const description = transaction.machinery.equipmentDetails.substring(
+      0,
+      100
+    );
+
     const accessToken = await getAccessToken();
     const response = await got.post(
       `${process.env.PAYPAL_BASEURL}/v2/checkout/orders`,
@@ -203,51 +170,61 @@ export const createOrderTest = asyncHandler(async (req, res) => {
         },
         json: {
           intent: 'CAPTURE',
+
           purchase_units: [
             {
+              reference_id: transactionId,
               items: [
                 {
-                  name: 'test1',
-                  description: 'test1234',
+                  name,
+                  description,
                   quantity: '1',
                   unit_amount: {
-                    currency_code: 'USD',
-                    value: '50.00',
+                    currency_code: currencyCode,
+                    value: unitValue,
                   },
                 },
               ],
               amount: {
-                currency_code: 'USD',
-                value: '50.00',
+                currency_code: currencyCode,
+                value: unitValue,
                 breakdown: {
                   item_total: {
-                    currency_code: 'USD',
-                    value: '50.00',
+                    currency_code: currencyCode,
+                    value: unitValue,
                   },
                 },
               },
             },
           ],
-          payment_source: {
-            paypal: {
-              experience_context: {
-                payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED',
-                payment_method_selected: 'PAYPAL',
-                brand_name: 'machineryMarket',
-                shipping_preference: 'NO_SHIPPING',
-                locale: 'en-US',
-                user_action: 'PAY_NOW',
-                return_url: `${process.env.PAYPAL_REDIRECT_BASE_URL}/complete-payment`,
-                cancel_url: `${process.env.PAYPAL_REDIRECT_BASE_URL}/cancel-payment`,
-              },
-            },
+
+          // ← moved out of `payment_source` and renamed:
+          application_context: {
+            brand_name: 'machineryMarket',
+            shipping_preference: 'NO_SHIPPING',
+            user_action: 'PAY_NOW',
+            return_url: `${process.env.PAYPAL_REDIRECT_BASE_URL}/complete-payment`,
+            cancel_url: `${process.env.PAYPAL_REDIRECT_BASE_URL}/cancel-payment`,
+            payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED',
+            payment_method_selected: 'PAYPAL',
+            locale: 'en-US',
           },
+
+          // you can leave this empty if you want PayPal's default:
+          payment_source: { paypal: {} },
         },
         responseType: 'json',
       }
     );
+
     console.log(response.body);
-    const orderId = response.body?.id;
+    const orderId = response.body.id;
+
+    // save it back on your transaction
+    await Transaction.findByIdAndUpdate(transactionId, {
+      paypalOrderId: orderId,
+    });
+
     return res.status(200).json({ orderId });
   } catch (err) {
     console.error('PayPal create-order error:', err.response?.body || err);
@@ -257,11 +234,12 @@ export const createOrderTest = asyncHandler(async (req, res) => {
     });
   }
 });
+
 export const capturePaymentTest = asyncHandler(async (req, res) => {
   try {
     const accessToken = await getAccessToken();
 
-    const { paymentId } = req.params;
+    const { transactionId, paymentId } = req.params;
 
     const response = await got.post(
       `${process.env.PAYPAL_BASEURL}/v2/checkout/orders/${paymentId}/capture`,
@@ -270,24 +248,28 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
+        json: {},
         responseType: 'json',
       }
     );
 
-    const paymentData = response.body;
+    const capture = response.body;
+    await Transaction.findByIdAndUpdate(transactionId, {
+      paymentStatus: 'completed',
+      isPaid: true,
+      paidAt: Date.now(),
+      paypalCaptureId: capture.purchase_units[0].payments.captures[0].id,
+    });
 
-    if (paymentData.status !== 'COMPLETED') {
-      return res.status(400).json({
-        error: 'paypal payment incomplete or failed',
-      });
-    }
     return res.status(200).json({
-      message: 'success',
-      user: {
-        email,
-      },
+      message: 'payment captured successfully',
+      capture,
     });
   } catch (err) {
-    res.status(500).json({ message: 'server error' });
+    console.log(err);
+    res.status(500).json({
+      message: 'server error',
+      details: err.response?.body || err.message,
+    });
   }
 });
