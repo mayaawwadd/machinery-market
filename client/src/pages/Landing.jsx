@@ -7,11 +7,11 @@ import Stats from '../components/landing/Stats';
 function Landing() {
   return (
     <>
-      <Hero></Hero>
-      <Features></Features>
-      <HowItWorks></HowItWorks>
-      <CTA></CTA>
-      <Stats></Stats>
+      <Hero />
+      <Features />
+      <HowItWorks />
+      <Stats />
+      <CTA />
     </>
   );
 }

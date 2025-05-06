@@ -25,7 +25,7 @@ function Footer() {
         color: theme.palette.common.white,
         pt: 6,
         pb: 3,
-        mt: 3,
+        mt: 0,
       }}
     >
       <Container maxWidth="lg">
