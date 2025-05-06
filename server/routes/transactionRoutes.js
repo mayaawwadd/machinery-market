@@ -18,9 +18,6 @@ router.patch('/:id/status', protect, updateTransactionStatus);
 router.get('/user/:userId', getUserTransactions);
 router.get('/', protect, adminOnly, getAllTransactions);
 
-// router.post('/paypal/createOrder', protect, createPayPalOrder);
-// router.post('/paypal/capture-order', protect, capturePayPalOrder);
-
 router.post('/paypal/createOrderTest', createOrderTest);
 router.post(
   '/paypal/:transactionId/capturePaymentTest/:paymentId',

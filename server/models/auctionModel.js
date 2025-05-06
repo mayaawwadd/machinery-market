@@ -41,6 +41,21 @@ const auctionSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Current bid cannot be negative'],
     },
+    minimumIncrement: {
+      type: Number,
+      required: [true, 'minimum Increment is required'],
+      min: 1,
+      default: 1,
+    },
+    highestBid: {
+      type: Number,
+      default: null,
+    },
+    highestBidBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
     bids: {
       type: [bidSchema],
       default: [],

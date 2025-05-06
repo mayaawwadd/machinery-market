@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes.js';
 import machineryRoutes from './routes/machineryRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
+import auctionRoutes from './routes/auctionRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,6 +38,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/machinery', machineryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/auctions', auctionRoutes);
 
 // Test route
 app.get('/api', (req, res) => {

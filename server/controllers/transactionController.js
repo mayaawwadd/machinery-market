@@ -5,6 +5,9 @@ import { payPalClient } from '../config/paypal.js';
 import checkoutNodeJssdk from '@paypal/checkout-server-sdk';
 import got from 'got';
 
+// @desc    purchase machinery and return transactionID
+// @route   POST /api/transactions
+// @access  Public
 export const purchaseMachinery = asyncHandler(async (req, res) => {
   const { machineryId, paymentMethod } = req.body;
 
@@ -69,6 +72,9 @@ export const purchaseMachinery = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    update transaction status
+// @route   PATCH /api/transactions/:id/status
+// @access  Public
 export const updateTransactionStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const { id } = req.params;
@@ -93,6 +99,9 @@ export const updateTransactionStatus = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    GET user transactions
+// @route   GET /api/transactions/user/:userId
+// @access  Public
 export const getUserTransactions = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
@@ -107,6 +116,9 @@ export const getUserTransactions = asyncHandler(async (req, res) => {
   res.status(200).json(transaction);
 });
 
+// @desc    GET all transactions
+// @route   GET /api/transactions/
+// @access  Public
 export const getAllTransactions = asyncHandler(async (req, res) => {
   const transaction = await Transaction.find();
 
@@ -137,6 +149,9 @@ export const getAccessToken = async () => {
   }
 };
 
+// @desc    create paypal order
+// @route   POST /api/transactions/paypal/CreateOrderTest
+// @access  Public
 export const createOrderTest = asyncHandler(async (req, res) => {
   try {
     const { transactionId } = req.body;
@@ -235,6 +250,9 @@ export const createOrderTest = asyncHandler(async (req, res) => {
   }
 });
 
+// @desc    capture paypal order
+// @route   POST /api/transactions/paypal/:transactionID/capturePaymentTest/orderId
+// @access  Public
 export const capturePaymentTest = asyncHandler(async (req, res) => {
   try {
     const accessToken = await getAccessToken();
