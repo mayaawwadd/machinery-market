@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Box,
     Container,
@@ -15,39 +16,166 @@ import {
     FormGroup,
     FormControlLabel,
     Slider,
+    CircularProgress
 } from '@mui/material';
+import axios from 'axios';
+import useDebounce from '../hooks/useDebounce';
 
-// Sample placeholder listings
-const machineryData = [
-    {
-        id: 1,
-        name: 'CNC Milling Machine',
-        price: 12000,
-        image: 'https://via.placeholder.com/400x200?text=CNC+Milling',
-        condition: 'Used',
-    },
-    {
-        id: 2,
-        name: 'Packaging Conveyor',
-        price: 8000,
-        image: 'https://via.placeholder.com/400x200?text=Packaging+Machine',
-        condition: 'New',
-    },
-    {
-        id: 3,
-        name: 'Diesel Generator 50kVA',
-        price: 10000,
-        image: 'https://via.placeholder.com/400x200?text=Generator',
-        condition: 'Used',
-    },
-];
-
-function BuyPage() {
+function BuyMachinery() {
+    const [listings, setListings] = useState([]);
     const [sortOption, setSortOption] = useState('');
     const [priceRange, setPriceRange] = useState([0, 20000]);
+    const [filters, setFilters] = useState({
+        hoursMin: 0,
+        hoursMax: 10000,
+        priceMin: 0,
+        priceMax: 200000,
+        category: [],
+        condition: [],
+    });
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [hydrated, setHydrated] = useState(false);
+    const [initialFetchDone, setInitialFetchDone] = useState(false);
+    const debouncedFilters = useDebounce(filters, 400);
+    const debouncedSort = useDebounce(sortOption, 400);
+
+    const updateSearchParams = useCallback((newFilters, newSort) => {
+        const params = new URLSearchParams();
+
+        if (newSort) params.set('sort', newSort);
+
+        params.set('hoursMin', newFilters.hoursMin);
+        params.set('hoursMax', newFilters.hoursMax);
+        params.set('priceMin', newFilters.priceMin);
+        params.set('priceMax', newFilters.priceMax);
+
+        newFilters.category.forEach((c) => params.append('category', c));
+        newFilters.condition.forEach((c) => params.append('condition', c));
+
+        setSearchParams(params);
+    });
+
+
+    const fetchListings = useCallback(async (filterParams = filters, sort = sortOption) => {
+        try {
+            setLoading(true);
+            const params = new URLSearchParams();
+
+            if (sort) params.set('sort', sort);
+            params.set('hoursMin', filterParams.hoursMin);
+            params.set('hoursMax', filterParams.hoursMax);
+            params.set('priceMin', filterParams.priceMin);
+            params.set('priceMax', filterParams.priceMax);
+            filterParams.category.forEach((c) => params.append('category', c));
+            filterParams.condition.forEach((c) => params.append('condition', c));
+
+            const res = await axios.get(`/api/machinery?${params.toString()}`);
+            setListings(res.data);
+        } catch (err) {
+            console.error('Failed to fetch listings', err);
+        } finally {
+            setLoading(false);
+        }
+    });
+
+
+    useEffect(() => {
+        const hoursMin = Number(searchParams.get('hoursMin')) || 0;
+        const hoursMax = Number(searchParams.get('hoursMax')) || 10000;
+        const priceMin = Number(searchParams.get('priceMin')) || 0;
+        const priceMax = Number(searchParams.get('priceMax')) || 200000;
+        const category = searchParams.getAll('category');
+        const condition = searchParams.getAll('condition');
+        const sort = searchParams.get('sort') || '';
+
+        setFilters({
+            hoursMin,
+            hoursMax,
+            priceMin,
+            priceMax,
+            category,
+            condition,
+        });
+
+        setSortOption(sort);
+        setPriceRange([priceMin, priceMax]);
+
+        // Mark hydration as complete
+        setHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!hydrated) return; // Skip until filters are hydrated
+
+        if (!initialFetchDone) {
+            setInitialFetchDone(true); // Skip first run
+            return;
+        }
+
+        updateSearchParams(debouncedFilters, debouncedSort);
+        fetchListings(debouncedFilters, debouncedSort);
+    }, [debouncedFilters, debouncedSort, hydrated]);
+
+
 
     const handleSortChange = (e) => {
-        setSortOption(e.target.value);
+        const value = e.target.value;
+        setSortOption(value);
+    };
+
+
+    const handleCategoryChange = (event) => {
+        const value = event.target.name;
+        const updatedCategories = filters.category.includes(value)
+            ? filters.category.filter((c) => c !== value)
+            : [...filters.category, value];
+
+        const updatedFilters = { ...filters, category: updatedCategories };
+        setFilters(updatedFilters);
+    };
+
+    const handleConditionChange = (event) => {
+        const value = event.target.name;
+        const updatedCondition = filters.condition.includes(value)
+            ? filters.condition.filter((c) => c !== value)
+            : [...filters.condition, value];
+
+        const updatedFilters = { ...filters, condition: updatedCondition };
+        setFilters(updatedFilters);
+    };
+
+    const handlePriceRangeChange = (e, newValue) => {
+        setPriceRange(newValue);
+        const updatedFilters = {
+            ...filters,
+            priceMin: newValue[0],
+            priceMax: newValue[1],
+        };
+        setFilters(updatedFilters);
+    };
+
+
+    const handleUsedHoursChange = (e, newValue) => {
+        const updatedFilters = {
+            ...filters,
+            hoursMin: newValue[0],
+            hoursMax: newValue[1],
+        };
+        setFilters(updatedFilters);
+    };
+
+    const isFilterApplied = () => {
+        return (
+            filters.category.length > 0 ||
+            filters.condition.length > 0 ||
+            filters.hoursMin > 0 ||
+            filters.hoursMax < 10000 ||
+            filters.priceMin > 0 ||
+            filters.priceMax < 200000
+        );
     };
 
     return (
@@ -68,30 +196,72 @@ function BuyPage() {
                             Category
                         </Typography>
                         <FormGroup>
-                            <FormControlLabel control={<Checkbox />} label="CNC" />
-                            <FormControlLabel control={<Checkbox />} label="Packaging" />
-                            <FormControlLabel control={<Checkbox />} label="Generators" />
-                            <FormControlLabel control={<Checkbox />} label="Construction" />
+                            {['industrial', 'agricultural', 'construction', 'medical', 'other'].map((cat) => (
+                                <FormControlLabel
+                                    key={cat}
+                                    control={
+                                        <Checkbox
+                                            name={cat}
+                                            checked={filters.category.includes(cat)}
+                                            onChange={handleCategoryChange}
+                                        />
+                                    }
+                                    label={cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                />
+                            ))}
                         </FormGroup>
 
                         <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
                             Condition
                         </Typography>
                         <FormGroup>
+                            {['new', 'used', 'refurbished'].map((cond) => (
+                                <FormControlLabel
+                                    key={cond}
+                                    control={
+                                        <Checkbox
+                                            name={cond}
+                                            checked={filters.condition.includes(cond)}
+                                            onChange={handleConditionChange}
+                                        />
+                                    }
+                                    label={cond.charAt(0).toUpperCase() + cond.slice(1)}
+                                />
+                            ))}
+                        </FormGroup>
+
+
+                        {/* <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                            Condition
+                        </Typography>
+                        <FormGroup>
                             <FormControlLabel control={<Checkbox />} label="New" />
                             <FormControlLabel control={<Checkbox />} label="Used" />
-                        </FormGroup>
+                        </FormGroup> */}
 
                         <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
                             Price Range
                         </Typography>
                         <Slider
                             value={priceRange}
-                            onChange={(e, newValue) => setPriceRange(newValue)}
+                            onChange={handlePriceRangeChange}
                             valueLabelDisplay="auto"
                             min={0}
                             max={20000}
                         />
+
+                        <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                            Used Hours
+                        </Typography>
+                        <Slider
+                            value={[filters.hoursMin, filters.hoursMax]}
+                            onChange={handleUsedHoursChange}
+                            valueLabelDisplay="auto"
+                            min={0}
+                            max={10000}
+                            step={100}
+                        />
+
                     </Box>
                 </Grid>
 
@@ -109,31 +279,44 @@ function BuyPage() {
                     </FormControl>
 
                     {/* Machinery Grid */}
-                    <Grid container spacing={3}>
-                        {machineryData.map((item) => (
-                            <Grid item xs={12} sm={6} md={4} key={item.id}>
-                                <Card sx={{ borderRadius: 3 }}>
-                                    <CardMedia
-                                        component="img"
-                                        height="140"
-                                        image={item.image}
-                                        alt={item.name}
-                                        sx={{ objectFit: 'cover' }}
-                                    />
-                                    <CardContent>
-                                        <Typography variant="h6">{item.name}</Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {item.condition} • ${item.price.toLocaleString()}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
-                    </Grid>
+                    {loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : listings.length === 0 ? (
+                        <Typography variant="body1">
+                            {isFilterApplied()
+                                ? 'No machinery listings found based on your filters.'
+                                : 'No machinery listings found.'}
+                        </Typography>
+                    ) : (
+                        <Grid container spacing={3}>
+                            {listings.map((item) => (
+                                <Grid item xs={12} md={4} key={item._id}>
+                                    <Card sx={{ borderRadius: 3 }}>
+                                        <CardMedia
+                                            component="img"
+                                            height="140"
+                                            image={item.images?.[0]}
+                                            alt={item.title}
+                                            sx={{ objectFit: 'cover' }}
+                                        />
+                                        <CardContent>
+                                            <Typography variant="h6">{item.title}</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {item.condition} • ${(item.priceCents / 100).toLocaleString()}
+                                            </Typography>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    )}
+
                 </Grid>
             </Grid>
         </Container>
     );
 }
 
-export default BuyPage;
+export default BuyMachinery;
