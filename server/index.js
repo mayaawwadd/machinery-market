@@ -4,10 +4,12 @@ dotenv.config();
 
 // Core dependencies
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { Server as SocketIOServer } from 'socket.io';
 
 // Custom modules
 import connectDB from './config/db.js';
@@ -16,6 +18,9 @@ import machineryRoutes from './routes/machineryRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
 import auctionRoutes from './routes/auctionRoutes.js';
+import mongoose, { mongo } from 'mongoose';
+import Auction from './models/auctionModel.js';
+import { scheduleAuctionClose } from './utils/auctionScheduler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,6 +45,47 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/auctions', auctionRoutes);
 
+const server = http.createServer(app);
+
+export const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+app.set('io', io);
+
+//constant call to refresh the timeout for the active auctions
+// This will be called when the server starts and every time a new auction is created or updated
+// so that we can schedule the closing of the auction
+// and emit the auctionClosed event to the clients
+mongoose.connection.once('open', async () => {
+  const active = await Auction.find({ isActive: true }).lean();
+  active.forEach((auction) => scheduleAuctionClose(auction, io));
+  console.log('Connected to MongoDB and scheduled active auctions');
+});
+
+// Socket.io connection
+io.on('connection', (socket) => {
+  console.log(`New client connected: ${socket.id}`);
+
+  socket.on('joinAuction', (auctionId) => {
+    socket.join(auctionId);
+    console.log(`Client ${socket.id} joined auction ${auctionId}`);
+  });
+
+  socket.on('leaveAuction', (auctionId) => {
+    socket.leave(auctionId);
+    console.log(`Client ${socket.id} left auction ${auctionId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Client disconnected: ${socket.id}`);
+  });
+});
+
 // Test route
 app.get('/api', (req, res) => {
   res.send('🚀 API is running...');
@@ -47,6 +93,6 @@ app.get('/api', (req, res) => {
 
 // Initialize server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`✅ Server is running on http://localhost:${PORT}`);
 });

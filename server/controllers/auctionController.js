@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Auction from '../models/auctionModel.js';
+import { scheduleAuctionClose } from '../utils/auctionScheduler.js';
 
 /**
  * @desc    create auction
@@ -26,6 +27,14 @@ export const createAuction = asyncHandler(async (req, res) => {
   if (!auction) {
     return res.status(401).json({ message: 'auction creation failed' });
   }
+
+  scheduleAuctionClose(auction);
+
+  const io = req.app.get('io');
+  if (io) {
+    io.emit('auctionCreated', auction);
+  }
+
   res.status(201).json({ message: 'auction created successfully' }, auction);
 });
 
@@ -112,9 +121,11 @@ export const placeBid = asyncHandler(async (req, res) => {
   auction.highestBidBy = userId;
 
   // If bid arrives in last X minutes, extend auction by X
+  let extended = false;
   const EXTENSION_WINDOW_MS = 1000 * 60 * 5; // 5 minutes
   if (auction.endTime - now <= EXTENSION_WINDOW_MS) {
     auction.endTime = new Date(auction.endTime.getTime() + EXTENSION_WINDOW_MS);
+    extended = true;
   }
 
   // Record the bid
@@ -128,5 +139,48 @@ export const placeBid = asyncHandler(async (req, res) => {
 
   await auction.save();
 
+  if (extended) {
+    scheduleAuctionClose(auction);
+  }
+
+  const io = req.app.get('io');
+  if (io) {
+    io.to(req.params.id).emit('bidPlaced', {
+      auctionId: auction._id,
+      highestBid: auction.highestBid,
+      highestBidBy: auction.highestBidBy,
+      endTime: auction.endTime,
+      bid: { bidder: userId, amount, timestamp: now },
+    });
+  }
+
   res.json({ message: 'Bid placed', auction });
+});
+
+/**
+ * @desc    close auction
+ * @route   PATCH /api/auctions/:id/closeAuction
+ * @access  Seller or Admin (protect + selfOrAdmin)
+ */
+export const closeAuction = asyncHandler(async (req, res) => {
+  const auction = await Auction.findById(req.params.id);
+  if (!auction || !auction.isActive) {
+    return res.status(400).json({ message: 'Auction not available' });
+  }
+  auction.isActive = false;
+
+  auction.winner = auction.highestBidBy;
+  auction.winnerBid = auction.highestBid;
+  await auction.save();
+
+  const io = req.app.get('io');
+  if (io) {
+    io.to(req.params.id).emit('auctionClosed', {
+      auctionId: auction._id,
+      winner: auction.winner,
+      winnerBid: auction.winnerBid,
+    });
+  }
+
+  res.status(200).json({ message: 'Auction closed', auction });
 });

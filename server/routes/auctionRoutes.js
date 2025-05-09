@@ -5,9 +5,11 @@ import {
   getLiveAuctions,
   getAuctionById,
   placeBid,
+  closeAuction,
 } from '../controllers/auctionController.js';
 
 import { protect } from '../middleware/authMiddleware.js';
+import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
 
 const router = express.Router();
 
@@ -16,5 +18,6 @@ router.get('/', getAllAuctions);
 router.get('/getLiveAuctions', getLiveAuctions);
 router.get('/:id', getAuctionById);
 router.post('/:id/placeBid', protect, placeBid);
+router.patch('/:id/closeAuction', protect, selfOrAdmin, closeAuction);
 
 export default router;
