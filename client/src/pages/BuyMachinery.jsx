@@ -35,12 +35,12 @@ function BuyMachinery() {
     });
 
     const [searchParams, setSearchParams] = useSearchParams();
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [hydrated, setHydrated] = useState(false);
     const [initialFetchDone, setInitialFetchDone] = useState(false);
     const debouncedFilters = useDebounce(filters, 400);
     const debouncedSort = useDebounce(sortOption, 400);
+    const navigate = useNavigate();
 
     const updateSearchParams = useCallback((newFilters, newSort) => {
         const params = new URLSearchParams();
@@ -85,8 +85,8 @@ function BuyMachinery() {
     useEffect(() => {
         const hoursMin = Number(searchParams.get('hoursMin')) || 0;
         const hoursMax = Number(searchParams.get('hoursMax')) || 10000;
-        const priceMin = Number(searchParams.get('priceMin')) || 0;
-        const priceMax = Number(searchParams.get('priceMax')) || 200000;
+        const priceMin = Number(searchParams.get('priceMin')) || 0;       // ✅ convert cents to JOD
+        const priceMax = Number(searchParams.get('priceMax')) || 200000;  // ✅ convert cents to JOD
         const category = searchParams.getAll('category');
         const condition = searchParams.getAll('condition');
         const sort = searchParams.get('sort') || '';
@@ -101,11 +101,11 @@ function BuyMachinery() {
         });
 
         setSortOption(sort);
-        setPriceRange([priceMin, priceMax]);
+        setPriceRange([priceMin, priceMax]); // ✅ keeps slider in JOD
 
-        // Mark hydration as complete
         setHydrated(true);
     }, []);
+
 
     useEffect(() => {
         if (!hydrated) return; // Skip until filters are hydrated
@@ -230,7 +230,6 @@ function BuyMachinery() {
                             ))}
                         </FormGroup>
 
-
                         {/* <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
                             Condition
                         </Typography>
@@ -247,7 +246,7 @@ function BuyMachinery() {
                             onChange={handlePriceRangeChange}
                             valueLabelDisplay="auto"
                             min={0}
-                            max={20000}
+                            max={200000}
                         />
 
                         <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
@@ -304,7 +303,11 @@ function BuyMachinery() {
                                         <CardContent>
                                             <Typography variant="h6">{item.title}</Typography>
                                             <Typography variant="body2" color="text.secondary">
-                                                {item.condition} • ${(item.priceCents / 100).toLocaleString()}
+                                                {item.condition} • {new Intl.NumberFormat('en-JO', {
+                                                    style: 'currency',
+                                                    currency: 'JOD',
+                                                }).format(item.priceCents / 100)}
+
                                             </Typography>
                                         </CardContent>
                                     </Card>
