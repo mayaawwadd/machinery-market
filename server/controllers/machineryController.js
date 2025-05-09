@@ -82,26 +82,37 @@ export const getAllMachinery = async (req, res) => {
       condition,
     } = req.query;
 
-    // Base query object
+    const parsedCategory = Array.isArray(category)
+      ? category
+      : category
+        ? [category]
+        : [];
+
+    const parsedCondition = Array.isArray(condition)
+      ? condition
+      : condition
+        ? [condition]
+        : [];
+
     const query = {
-      usedHours: { $gte: Number(hoursMin), $lte: Number(hoursMax) },
-      priceCents: { $gte: Number(priceMin), $lte: Number(priceMax) },
+      usedHours: {
+        $gte: Number(hoursMin),
+        $lte: Number(hoursMax),
+      },
+      priceCents: {
+        $gte: Number(priceMin) * 100, // convert from JD to cents
+        $lte: Number(priceMax) * 100,
+      },
     };
 
-    // Support single or multiple category values
-    if (category) {
-      query.category = Array.isArray(category)
-        ? { $in: category }
-        : { $in: [category] };
+    if (parsedCategory.length > 0) {
+      query.category = { $in: parsedCategory };
     }
 
-    if (condition) {
-      query.condition = Array.isArray(condition)
-        ? { $in: condition }
-        : { $in: [condition] };
+    if (parsedCondition.length > 0) {
+      query.condition = { $in: parsedCondition };
     }
 
-    // Handle sorting
     let sortOption = {};
     if (sort === 'priceAsc') sortOption.priceCents = 1;
     else if (sort === 'priceDesc') sortOption.priceCents = -1;
