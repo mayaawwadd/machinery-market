@@ -10,6 +10,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Auth/login/Login';
 import Register from './pages/Auth/register/Register';
 import Profile from './pages/Profile';
+import BuyMachinery from './pages/BuyMachinery';
 import CancelPayment from './pages/cancelPayment';
 import CompletePayment from './pages/completePayment';
 import PaypalPayment from './components/payment/paypalPayment';
@@ -23,7 +24,7 @@ const router = createBrowserRouter([
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
       { path: 'profile', element: <Profile /> },
-
+      { path: 'buy', element: <BuyMachinery /> },
       //paypal flow
       { path: 'paypal', element: <PaypalPayment /> },
       { path: 'complete-payment', element: <CompletePayment /> },

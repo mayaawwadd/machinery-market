@@ -72,16 +72,52 @@ export const createMachinery = async (req, res) => {
  */
 export const getAllMachinery = async (req, res) => {
   try {
-    const listings = await Machinery.find().populate(
-      'seller',
-      'username email'
-    );
+    const {
+      sort,
+      hoursMin = 0,
+      hoursMax = 100000,
+      priceMin = 0,
+      priceMax = 10000000,
+      category,
+      condition,
+    } = req.query;
+
+    // Base query object
+    const query = {
+      usedHours: { $gte: Number(hoursMin), $lte: Number(hoursMax) },
+      priceCents: { $gte: Number(priceMin), $lte: Number(priceMax) },
+    };
+
+    // Support single or multiple category values
+    if (category) {
+      query.category = Array.isArray(category)
+        ? { $in: category }
+        : { $in: [category] };
+    }
+
+    if (condition) {
+      query.condition = Array.isArray(condition)
+        ? { $in: condition }
+        : { $in: [condition] };
+    }
+
+    // Handle sorting
+    let sortOption = {};
+    if (sort === 'priceAsc') sortOption.priceCents = 1;
+    else if (sort === 'priceDesc') sortOption.priceCents = -1;
+    else if (sort === 'newest') sortOption.createdAt = -1;
+
+    const listings = await Machinery.find(query)
+      .sort(sortOption)
+      .populate('seller', 'username email');
+
     res.json(listings);
   } catch (err) {
-    console.error('❌ Error fetching machinery:', err);
+    console.error('❌ Error fetching filtered machinery:', err);
     res.status(500).json({ message: 'Server error while fetching listings' });
   }
 };
+
 
 /**
  * @desc    Fetch a single machinery listing by ID
