@@ -24,7 +24,7 @@ const router = createBrowserRouter([
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
       { path: 'profile', element: <Profile /> },
-      { path: 'buy', element: <BuyMachinery /> },
+      { path: 'machinery/buy', element: <BuyMachinery /> },
       //paypal flow
       { path: 'paypal', element: <PaypalPayment /> },
       { path: 'complete-payment', element: <CompletePayment /> },
