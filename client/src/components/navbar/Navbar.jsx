@@ -58,7 +58,9 @@ function Navbar() {
       <List>
         {navItems.map((item) => (
           <ListItem key={item} disablePadding>
-            <ListItemButton>
+            <ListItemButton
+              component={Link}
+              to={`machinery/${item.toLowerCase()}`}>
               <ListItemText primary={item} />
             </ListItemButton>
           </ListItem>
@@ -115,7 +117,14 @@ function Navbar() {
               <Typography
                 key={item}
                 variant="button"
-                sx={{ cursor: 'pointer' }}
+                component={Link}
+                to={`machinery/${item.toLowerCase()}`}
+                sx={{
+                  cursor: 'pointer',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  '&:hover': { color: hoverColor }
+                }}
               >
                 {item}
               </Typography>
