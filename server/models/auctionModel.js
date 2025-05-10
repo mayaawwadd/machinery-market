@@ -67,12 +67,6 @@ const auctionSchema = new mongoose.Schema(
     startTime: {
       type: Date,
       required: [true, 'Auction start time is required'],
-      validate: {
-        validator: function (value) {
-          return value > new Date();
-        },
-        message: 'Start time must be in the future',
-      },
     },
     endTime: {
       type: Date,
@@ -91,6 +85,10 @@ const auctionSchema = new mongoose.Schema(
     winner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      default: null,
+    },
+    winnerBid: {
+      type: Number,
       default: null,
     },
   },
