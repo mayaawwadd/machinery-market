@@ -1,5 +1,6 @@
 import Machinery from '../models/machineryModel.js';
 import Transaction from '../models/transactionModel.js';
+import Auction from '../models/auctionModel.js';
 import asyncHandler from 'express-async-handler';
 import { payPalClient } from '../config/paypal.js';
 import checkoutNodeJssdk from '@paypal/checkout-server-sdk';

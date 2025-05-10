@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Auction from '../models/auctionModel.js';
+import Transaction from '../models/transactionModel.js';
 import { scheduleAuctionClose } from '../utils/auctionScheduler.js';
 
 /**
@@ -162,6 +163,8 @@ export const placeBid = asyncHandler(async (req, res) => {
  * @route   PATCH /api/auctions/:id/closeAuction
  * @access  Seller or Admin (protect + selfOrAdmin)
  */
+//this function is not involved in closing the auction automatically
+//this function is used to close the auction manually by the seller or admin
 export const closeAuction = asyncHandler(async (req, res) => {
   const auction = await Auction.findById(req.params.id);
   if (!auction || !auction.isActive) {
@@ -183,4 +186,56 @@ export const closeAuction = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({ message: 'Auction closed', auction });
+});
+
+/**
+ * @desc    Create a purchase for an auction winner
+ * @route   POST /api/auctions/:auctionId/purchase
+ * @access  Buyer (protect + selfOrAdmin?)
+ */
+export const purchaseAuction = asyncHandler(async (req, res) => {
+  const { auctionId } = req.params;
+  const userId = req.user._id;
+
+  // 1) Find the auction
+  const auction = await Auction.findById(auctionId).populate('machine seller');
+  if (!auction) {
+    return res.status(404).json({ message: 'Auction not found' });
+  }
+
+  // 2) Must be closed
+  if (auction.isActive) {
+    return res.status(400).json({ message: 'Auction not yet closed' });
+  }
+
+  // 3) Only the winner can buy
+  if (auction.winner.toString() !== userId.toString()) {
+    return res.status(403).json({ message: 'You are not the winner' });
+  }
+
+  // 4) Prevent duplicate purchases
+  const existing = await Transaction.findOne({ auction: auctionId });
+  if (existing) {
+    return res
+      .status(409)
+      .json({ message: 'Purchase already initiated for this auction' });
+  }
+
+  // 5) Create the transaction
+  const tx = await Transaction.create({
+    buyer: userId,
+    seller: auction.seller._id,
+    machinery: auction.machine._id,
+    auction: auctionId,
+    amountCents: auction.winnerBid * 100,
+    currency: 'USD',
+    paymentMethod: 'paypal',
+    paymentStatus: 'pending',
+    isPaid: false,
+  });
+
+  res.status(201).json({
+    message: 'Transaction created, proceed to payment',
+    transaction: tx,
+  });
 });

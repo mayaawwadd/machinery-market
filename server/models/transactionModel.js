@@ -17,6 +17,11 @@ const transactionSchema = new mongoose.Schema(
       ref: 'Machinery',
       required: true,
     },
+    auction: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Auction',
+      required: true,
+    },
     amountCents: {
       type: Number,
       required: true,
