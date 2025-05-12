@@ -1,101 +1,72 @@
+// models/auctionModel.js
 import mongoose from 'mongoose';
 
-const bidSchema = new mongoose.Schema(
-  {
-    bidder: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Bidder is required'],
-    },
-    amount: {
-      type: Number,
-      required: [true, 'Bid amount is required'],
-      min: [1, 'Bid amount must be greater than 0'],
-    },
-    bidTime: {
-      type: Date,
-      default: Date.now,
-    },
+const auctionSchema = new mongoose.Schema({
+  machine: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Machinery',
+    required: true
   },
-  { _id: false }
-);
-const auctionSchema = new mongoose.Schema(
-  {
-    machine: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Machinery',
-      required: [true, 'Machine ID is required'],
-    },
-    seller: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Seller ID is required'],
-    },
-    startingPrice: {
-      type: Number,
-      required: [true, 'Starting price is required'],
-      min: [0, 'Starting price cannot be negative'],
-    },
-    currentBid: {
-      type: Number,
-      default: 0,
-      min: [0, 'Current bid cannot be negative'],
-    },
-    minimumIncrement: {
-      type: Number,
-      required: [true, 'minimum Increment is required'],
-      min: 1,
-      default: 1,
-    },
-    highestBid: {
-      type: Number,
-      default: null,
-    },
-    highestBidBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-    },
-    bids: {
-      type: [bidSchema],
-      default: [],
-      validate: {
-        validator: (arr) => Array.isArray(arr),
-        message: 'Bids must be an array',
-      },
-    },
-    startTime: {
-      type: Date,
-      required: [true, 'Auction start time is required'],
-    },
-    endTime: {
-      type: Date,
-      required: [true, 'Auction end time is required'],
-      validate: {
-        validator: function (value) {
-          return this.startTime && value > this.startTime;
-        },
-        message: 'End time must be after start time',
-      },
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    winner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      default: null,
-    },
-    winnerBid: {
-      type: Number,
-      default: null,
-    },
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  {
-    timestamps: true,
+  startingPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  currentBid: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0
+  },
+  currentBidBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  minimumIncrement: {
+    type: Number,
+    required: true,
+    min: 1,
+    default: 1
+  },
+  startTime: {
+    type: Date,
+    required: true
+  },
+  endTime: {
+    type: Date,
+    required: true,
+    validate: {
+      validator: function (v) { return v > this.startTime; },
+      message: 'End time must come after start time'
+    }
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  winner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  winnerBid: {
+    type: Number,
+    default: null
   }
-);
+}, {
+  timestamps: true
+});
+
+// single‐field indexes
+// Indexes on isActive and endTime for fast “live” queries
+auctionSchema.index({ isActive: 1 });
+auctionSchema.index({ endTime: 1 });
 
 const Auction = mongoose.model('Auction', auctionSchema);
 export default Auction;

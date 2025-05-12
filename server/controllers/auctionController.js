@@ -1,5 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Auction from '../models/auctionModel.js';
+import Bid from '../models/bidModel.js';
+import Machinery from '../models/machineryModel.js';
 import { scheduleAuctionClose } from '../utils/auctionScheduler.js';
 
 /**
@@ -10,32 +12,50 @@ import { scheduleAuctionClose } from '../utils/auctionScheduler.js';
 export const createAuction = asyncHandler(async (req, res) => {
   const { machineryId, startTime, endTime, startingPrice, minimumIncrement } =
     req.body;
+
   if (!machineryId || !endTime || startingPrice == null) {
     return res
       .status(400)
       .json({ message: 'machineryId, endTime & startingPrice are required' });
   }
+
+  // Optional extra validation:
+  if (startTime && new Date(startTime) >= new Date(endTime)) {
+    return res
+      .status(400)
+      .json({ message: 'endTime must be after startTime' });
+  }
+
   const auction = await Auction.create({
     machine: machineryId,
     seller: req.user._id,
-    startTime: startTime || Date.now(),
-    endTime,
+    startTime: startTime ? new Date(startTime) : Date.now(),
+    endTime: new Date(endTime),
     startingPrice,
     minimumIncrement: minimumIncrement ?? 1,
     isActive: true,
   });
+
   if (!auction) {
-    return res.status(401).json({ message: 'auction creation failed' });
+    return res.status(500).json({ message: 'Auction creation failed' });
   }
 
+  // Mark the machinery as “now being auctioned”
+  await Machinery.findByIdAndUpdate(machineryId, { isAuction: true });
+
+  // Schedule auto-close
   scheduleAuctionClose(auction);
 
+  // Broadcast over sockets
   const io = req.app.get('io');
   if (io) {
     io.emit('auctionCreated', auction);
   }
 
-  res.status(201).json({ message: 'auction created successfully' }, auction);
+  res.status(201).json({
+    message: 'Auction created successfully',
+    auction
+  });
 });
 
 /**
@@ -49,9 +69,6 @@ export const getAllAuctions = asyncHandler(async (req, res) => {
     'title equipmentDetails username'
   );
 
-  if (auctions.length === 0) {
-    return res.status(404).json({ message: 'no auctions available' });
-  }
   res.status(200).json(auctions);
 });
 
@@ -65,9 +82,6 @@ export const getLiveAuctions = asyncHandler(async (req, res) => {
     'machine seller',
     'title equipmentDetails username'
   );
-  if (auctions.length === 0) {
-    return res.status(404).json({ message: 'no auctions available' });
-  }
 
   res.status(200).json(auctions);
 });
@@ -79,12 +93,18 @@ export const getLiveAuctions = asyncHandler(async (req, res) => {
  */
 export const getAuctionById = asyncHandler(async (req, res) => {
   const auction = await Auction.findById(req.params.id)
-    .populate('machine seller', 'title equipmentDetails username')
-    .populate('bids.bidder', 'username');
+    .populate('machine seller', 'title equipmentDetails username');
+
   if (!auction) {
     return res.status(404).json({ message: 'Auction not found' });
   }
-  res.status(200).json(auction);
+
+  // Load bids (sorted by time)
+  const bids = await Bid.find({ auction: auction._id })
+    .populate('bidder', 'username')
+    .sort('bidTime');
+
+  res.status(200).json({ auction, bids });
 });
 
 /**
@@ -95,32 +115,36 @@ export const getAuctionById = asyncHandler(async (req, res) => {
 export const placeBid = asyncHandler(async (req, res) => {
   const { amount } = req.body;
   const userId = req.user._id;
+
+  // Step 1: fetch + validate auction state
   const auction = await Auction.findById(req.params.id);
   if (!auction || !auction.isActive) {
     return res.status(400).json({ message: 'Auction is not active' });
   }
 
   const now = new Date();
-  /* if (now < auction.startTime) {
+  if (now < auction.startTime) {
     return res.status(400).json({ message: 'Auction has not started yet' });
   }
   if (now > auction.endTime) {
-    return res.status(400).json({ message: 'Auction has already ended' });
+    return res.status(400).json({ message: 'Auction has ended' });
   }
-    */
 
   // Determine minimum valid bid
-  const currentHigh = auction.highestBid ?? auction.startingPrice;
-  const minNext = currentHigh + auction.minimumIncrement;
+  const floor = Math.max(auction.currentBid, auction.startingPrice);
+  const minNext = floor + auction.minimumIncrement;
   if (amount < minNext) {
-    return res.status(400).json({
-      message: `Bid must be at least ${minNext}`,
-    });
+    return res.status(400).json({ message: `Bid must be at least ${minNext}` });
   }
-  auction.highestBid = amount;
-  auction.highestBidBy = userId;
 
-  // If bid arrives in last X minutes, extend auction by X
+  // Step 2: Record the highest bid 
+  const bid = await Bid.create({
+    auction: auction._id,
+    bidder: userId,
+    amount,
+  });
+
+  // Step 3: If bid arrives in last X minutes, extend auction by X
   let extended = false;
   const EXTENSION_WINDOW_MS = 1000 * 60 * 5; // 5 minutes
   if (auction.endTime - now <= EXTENSION_WINDOW_MS) {
@@ -128,15 +152,9 @@ export const placeBid = asyncHandler(async (req, res) => {
     extended = true;
   }
 
-  // Record the bid
-  auction.bids.push({
-    bidder: userId,
-    amount,
-    timestamp: now,
-  });
-  auction.highestBid = amount;
-  auction.highestBidBy = userId;
-
+  // Step 4: automatically bump the top-bid fields
+  auction.currentBid = amount;
+  auction.currentBidBy = userId;
   await auction.save();
 
   if (extended) {
@@ -145,16 +163,16 @@ export const placeBid = asyncHandler(async (req, res) => {
 
   const io = req.app.get('io');
   if (io) {
-    io.to(req.params.id).emit('bidPlaced', {
+    io.to(auction._id.toString()).emit('bidPlaced', {
       auctionId: auction._id,
-      highestBid: auction.highestBid,
-      highestBidBy: auction.highestBidBy,
+      currentBid: auction.currentBid,
+      currentBidBy: auction.currentBidBy,
       endTime: auction.endTime,
-      bid: { bidder: userId, amount, timestamp: now },
+      bid,
     });
   }
 
-  res.json({ message: 'Bid placed', auction });
+  res.json({ message: 'Bid placed', bid, currentBid: auction.currentBid });
 });
 
 /**
@@ -169,13 +187,13 @@ export const closeAuction = asyncHandler(async (req, res) => {
   }
   auction.isActive = false;
 
-  auction.winner = auction.highestBidBy;
-  auction.winnerBid = auction.highestBid;
+  auction.winner = auction.currentBidBy;
+  auction.winnerBid = auction.currentBid;
   await auction.save();
 
   const io = req.app.get('io');
   if (io) {
-    io.to(req.params.id).emit('auctionClosed', {
+    io.to(auction._id.toString()).emit('auctionClosed', {
       auctionId: auction._id,
       winner: auction.winner,
       winnerBid: auction.winnerBid,

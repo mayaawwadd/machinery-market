@@ -17,7 +17,7 @@ router.post('/', protect, createAuction);
 router.get('/', getAllAuctions);
 router.get('/getLiveAuctions', getLiveAuctions);
 router.get('/:id', getAuctionById);
-router.post('/:id/placeBid', protect, placeBid);
+router.post('/:id/bid', protect, placeBid);
 router.patch('/:id/closeAuction', protect, selfOrAdmin, closeAuction);
 
 export default router;
