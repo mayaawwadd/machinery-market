@@ -5,6 +5,7 @@ import asyncHandler from 'express-async-handler';
 import { payPalClient } from '../config/paypal.js';
 import checkoutNodeJssdk from '@paypal/checkout-server-sdk';
 import got from 'got';
+import User from '../models/userModel.js';
 
 // @desc    purchase machinery and return transactionID
 // @route   POST /api/transactions
@@ -273,12 +274,34 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
     );
 
     const capture = response.body;
-    await Transaction.findByIdAndUpdate(transactionId, {
+    const transaction = await Transaction.findByIdAndUpdate(transactionId, {
       paymentStatus: 'completed',
       isPaid: true,
       paidAt: Date.now(),
       paypalCaptureId: capture.purchase_units[0].payments.captures[0].id,
     });
+
+    const buyer = await User.findById(transactionId.buyer);
+    if (buyer?.email) {
+      await sendMail({
+        to: buyer.email,
+        from: process.env.SMTP_FROM,
+        subject: `Payment received for "${transaction.machinery.title}"`,
+        text: `Your payment of $${
+          transaction.amountCents / 100
+        } has been received.`,
+        html: `
+          <p>Hi ${buyer.username},</p>
+          <p>Your payment of <strong>$${
+            transaction.amountCents / 100
+          }</strong> has been received.</p>
+          <p><a href="${process.env.CLIENT_URL}/transactions/${
+          transaction._id
+        }">
+             View your transaction →</a></p>
+        `,
+      });
+    }
 
     return res.status(200).json({
       message: 'payment captured successfully',
