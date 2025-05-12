@@ -1,3 +1,5 @@
+//this is a test file to test the socket connection and the auction events
+// as i dont have a client side yet
 import { io } from 'socket.io-client';
 
 const SOCKET_URL = 'http://localhost:5000'; // Replace with your server URL

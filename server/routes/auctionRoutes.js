@@ -6,8 +6,8 @@ import {
   getAuctionById,
   placeBid,
   closeAuction,
+  purchaseAuction,
 } from '../controllers/auctionController.js';
-
 import { protect } from '../middleware/authMiddleware.js';
 import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
 
@@ -19,5 +19,6 @@ router.get('/getLiveAuctions', getLiveAuctions);
 router.get('/:id', getAuctionById);
 router.post('/:id/bid', protect, placeBid);
 router.patch('/:id/closeAuction', protect, selfOrAdmin, closeAuction);
+router.post('/:auctionId/purchaseAuction', protect, purchaseAuction);
 
 export default router;
