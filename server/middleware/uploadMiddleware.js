@@ -3,7 +3,7 @@ import path from 'path'; // A node.js module for working with file paths
 import fs from 'fs'; // File system module to create directories
 
 // Define where profile images will be stored
-const uploadPath = 'public/uploads/profile';
+const uploadPath = 'server/public/uploads/profile';
 
 // Ensure the folder exists (recursive: true creates nested folders if they don't exist)
 fs.mkdirSync(uploadPath, { recursive: true });
@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 
   // Customize the uploaded file's name to make it unique
   filename(req, file, cb) {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}}`;
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname); //preserve the original extension
     cb(null, `user-${req.user._id}-${uniqueSuffix}${ext}`);
   },
