@@ -18,10 +18,12 @@ import machineryRoutes from './routes/machineryRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
 import auctionRoutes from './routes/auctionRoutes.js';
+import emailRoutes from './routes/testEmail.js';
 import mongoose, { mongo } from 'mongoose';
 import Auction from './models/auctionModel.js';
 import { scheduleAuctionClose } from './utils/auctionScheduler.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import e from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -48,6 +50,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/auctions', auctionRoutes);
 app.use('/api', uploadRoutes);
+app.use('/api', emailRoutes);
 
 const server = http.createServer(app);
 

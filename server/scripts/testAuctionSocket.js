@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 
 const SOCKET_URL = 'http://localhost:5000'; // Replace with your server URL
 
-const auctionId = '681e56f8f28d40e11595299d'; // Replace with your auction ID
+const auctionId = '68222ee426e1f55a658b3355'; // Replace with your auction ID
 const socket = io(SOCKET_URL, {
   path: '/socket.io',
   transports: ['websocket'],

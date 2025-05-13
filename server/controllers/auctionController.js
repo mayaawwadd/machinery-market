@@ -1,6 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import Auction from '../models/auctionModel.js';
 import Bid from '../models/bidModel.js';
+import User from '../models/userModel.js';
+import { sendMail } from '../utils/emailService.js';
 import Machinery from '../models/machineryModel.js';
 import Transaction from '../models/transactionModel.js';
 import { scheduleAuctionClose } from '../utils/auctionScheduler.js';
@@ -22,9 +24,7 @@ export const createAuction = asyncHandler(async (req, res) => {
 
   // Optional extra validation:
   if (startTime && new Date(startTime) >= new Date(endTime)) {
-    return res
-      .status(400)
-      .json({ message: 'endTime must be after startTime' });
+    return res.status(400).json({ message: 'endTime must be after startTime' });
   }
 
   const auction = await Auction.create({
@@ -55,7 +55,7 @@ export const createAuction = asyncHandler(async (req, res) => {
 
   res.status(201).json({
     message: 'Auction created successfully',
-    auction
+    auction,
   });
 });
 
@@ -93,8 +93,10 @@ export const getLiveAuctions = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const getAuctionById = asyncHandler(async (req, res) => {
-  const auction = await Auction.findById(req.params.id)
-    .populate('machine seller', 'title equipmentDetails username');
+  const auction = await Auction.findById(req.params.id).populate(
+    'machine seller',
+    'title equipmentDetails username'
+  );
 
   if (!auction) {
     return res.status(404).json({ message: 'Auction not found' });
@@ -118,7 +120,9 @@ export const placeBid = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   // Step 1: fetch + validate auction state
-  const auction = await Auction.findById(req.params.id);
+  const auction = await Auction.findById(req.params.id)
+    .populate('machine seller')
+    .populate('seller', 'username');
   if (!auction || !auction.isActive) {
     return res.status(400).json({ message: 'Auction is not active' });
   }
@@ -138,7 +142,7 @@ export const placeBid = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: `Bid must be at least ${minNext}` });
   }
 
-  // Step 2: Record the highest bid 
+  // Step 2: Record the highest bid
   const bid = await Bid.create({
     auction: auction._id,
     bidder: userId,
@@ -154,9 +158,45 @@ export const placeBid = asyncHandler(async (req, res) => {
   }
 
   // Step 4: automatically bump the top-bid fields
+
+  const previousBid = floor;
+  const previousBidder = auction.currentBidBy;
   auction.currentBid = amount;
   auction.currentBidBy = userId;
   await auction.save();
+
+  const bidderUser = await User.findById(userId);
+  if (bidderUser?.email) {
+    await sendMail({
+      to: bidderUser.email,
+      from: process.env.SMTP_FROM,
+      subject: `You placed a bid on "${auction.machine.title}"`,
+      text: `You placed a bid of $${amount} on "${auction.machine.title}"`,
+      html: `
+      <p>Hi ${bidderUser.username},</p>
+      <p>Your bid of <strong>$${amount}</strong> on 
+         <em>${auction.machine.title}</em> has been placed successfully.</p>
+      <p><a href="${process.env.CLIENT_URL}/auctions/${auction._id}">
+         View your bid in the auction &rarr;
+      </a></p>
+    `,
+    });
+  }
+
+  if (previousBidder && previousBidder.toString() !== userId.toString()) {
+    const outbidUser = await User.findById(previousBidder);
+    if (outbidUser?.email) {
+      await sendMail({
+        to: outbidUser.email,
+        from: process.env.SMTP_FROM,
+        subject: `You’ve been outbid on "${auction.machine.title}"`,
+        text: `Your bid of $${previousBid} was topped by another bidder. The new high bid is $${amount}.`,
+        html: `<p>Hi ${outbidUser.username},</p>
+                <p>Your $${previousBid} bid on <strong>${auction.machine.title}</strong> has been outbid.</p>
+                <p><a href="${process.env.CLIENT_URL}/auctions/${auction._id}">View the auction</a></p>`,
+      });
+    }
+  }
 
   if (extended) {
     scheduleAuctionClose(auction);
@@ -184,7 +224,9 @@ export const placeBid = asyncHandler(async (req, res) => {
 //this function is not involved in closing the auction automatically
 //this function is used to close the auction manually by the seller or admin
 export const closeAuction = asyncHandler(async (req, res) => {
-  const auction = await Auction.findById(req.params.id);
+  const auction = await Auction.findById(req.params.id)
+    .populate('machine', 'title')
+    .populate('seller', 'username');
   if (!auction || !auction.isActive) {
     return res.status(400).json({ message: 'Auction not available' });
   }
@@ -193,6 +235,25 @@ export const closeAuction = asyncHandler(async (req, res) => {
   auction.winner = auction.currentBidBy;
   auction.winnerBid = auction.currentBid;
   await auction.save();
+
+  if (auction.currentBidBy) {
+    const winner = await User.findById(auction.currentBidBy);
+    if (winner?.email) {
+      await sendMail({
+        to: winner.email,
+        from: process.env.SMTP_FROM,
+        subject: `🎉 You won "${auction.machine.title}"!`,
+        text: `Congrats! You won with a bid of $${auction.currentBid}.`,
+        html: `
+          <p>Hi ${winner.username},</p>
+          <p>Your bid of <strong>$${auction.currentBid}</strong> won the auction for
+             <em>${auction.machine.title}</em>.</p>
+          <p><a href="${process.env.CLIENT_URL}/auctions/${auction._id}">
+             View your purchase →</a></p>
+        `,
+      });
+    }
+  }
 
   const io = req.app.get('io');
   if (io) {
