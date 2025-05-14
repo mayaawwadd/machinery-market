@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
     Container,
+    Link,
     Box,
     Grid,
     Typography,
@@ -13,7 +14,9 @@ import {
     Select,
     MenuItem,
     Button,
+    IconButton
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../services/axiosInstance';
 
@@ -75,7 +78,7 @@ export default function SellMachinery() {
             const uploads = files.map((file) => {
                 const data = new FormData();
                 data.append('image', file);
-                return axiosInstance.post('/upload/profile', data, {
+                return axiosInstance.post('/upload/machinery', data, {
                     headers: { 'Content-Type': 'multipart/form-data' },
                 });
             });
@@ -88,6 +91,75 @@ export default function SellMachinery() {
             setError('Failed to upload images');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRemoveImage = async (index) => {
+        const url = form.images[index];
+        // optional: strip off the base URL to get the filename
+        const filename = url.split('/').pop();
+
+        // 1) Optimistically remove from UI
+        setForm(f => ({
+            ...f,
+            images: f.images.filter((_, i) => i !== index)
+        }));
+
+        // 2) (Optional) tell the server to delete the file
+        try {
+            await axiosInstance.delete(`/upload/machinery/${filename}`);
+        } catch (err) {
+            console.error('Failed to delete image on server', err);
+            // you could re-add it to state here if you care about consistency
+        }
+    };
+
+    // handle file uploads for the original invoice
+    const handleInvoiceUpload = async (e) => {
+        const file = e.target.files?.[0];
+
+        if (!file) return;
+        setLoading(true);
+
+        try {
+            const data = new FormData();
+            data.append('invoice', file);
+
+            const res = await axiosInstance.post(
+                '/upload/invoice',
+                data,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+
+            const base = import.meta.env.VITE_API_URL;
+            setForm(f => ({
+                ...f,
+                originalInvoice: base + res.data.url
+            }));
+        } catch (err) {
+            console.log('Invoice upload failed: ', err);
+            setError('Failed to upload invoice');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // at top of component, next to handleRemoveImage:
+    const handleRemoveInvoice = async () => {
+        if (!form.originalInvoice) return;
+
+        // extract filename from URL
+        const filename = form.originalInvoice.split('/').pop();
+
+        // Optimistically clear it from the form
+        setForm(f => ({ ...f, originalInvoice: '' }));
+
+        try {
+            await axiosInstance.delete(`/upload/invoice/${filename}`);
+        } catch (err) {
+            console.error('Failed to delete invoice on server, rolling back', err);
+            // put it back if deletion fails
+            setForm(f => ({ ...f, originalInvoice: import.meta.env.VITE_API_URL + `/uploads/invoices/${filename}` }));
         }
     };
 
@@ -283,14 +355,39 @@ export default function SellMachinery() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                    <InputLabel htmlFor="originalInvoice">Original Invoice URL</InputLabel>
-                    <OutlinedInput
-                        id="originalInvoice"
-                        name="originalInvoice"
-                        value={form.originalInvoice}
-                        onChange={handleChange}
-                        label="Original Invoice URL"
-                    />
+                    <InputLabel shrink>Original Invoice</InputLabel>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                        <Button variant="outlined" component="label" disabled={loading} sx={{ borderRadius: '999px', mt: 1, mr: 2 }}>
+                            Upload Invoice
+                            <input
+                                hidden
+                                accept=".pdf,image/jpeg,image/png"
+                                type="file"
+                                onChange={handleInvoiceUpload}
+                            />
+                        </Button>
+
+                        {form.originalInvoice && (
+                            <>
+                                <Link
+                                    href={form.originalInvoice}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    underline="hover"
+                                    sx={{ fontSize: '0.875rem' }}
+                                >
+                                    View Invoice
+                                </Link>
+                                <IconButton
+                                    size="small"
+                                    onClick={handleRemoveInvoice}
+                                    sx={{ color: 'error.main' }}
+                                >
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            </>
+                        )}
+                    </Box>
                 </FormControl>
 
                 <FormControl fullWidth>
@@ -342,17 +439,32 @@ export default function SellMachinery() {
                 {/* Image upload & preview */}
                 <FormControl fullWidth>
                     <InputLabel shrink>Images</InputLabel>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 1, py: 1, px: 4 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, my: 1, py: 1, px: 4 }}>
                         {form.images.map((url, i) => (
-                            <Box
-                                key={i}
-                                component="img"
-                                src={url}
-                                sx={{ height: 80, borderRadius: 1, objectFit: 'cover' }}
-                            />
+                            <Box key={i} sx={{ position: 'relative' }}>
+                                <Box
+                                    component="img"
+                                    src={url}
+                                    sx={{ height: 80, borderRadius: 1, objectFit: 'cover' }}
+                                />
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleRemoveImage(i)}
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 2,
+                                        right: 2,
+                                        bgcolor: 'rgba(0,0,0,0.6)',
+                                        color: 'white',
+                                        '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+                                    }}
+                                >
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            </Box>
                         ))}
                     </Box>
-                    <Button variant="outlined" component="label" disabled={loading}>
+                    <Button variant="outlined" component="label" disabled={loading} sx={{ borderRadius: '999px' }}>
                         Upload Images
                         <input
                             hidden
@@ -427,7 +539,7 @@ export default function SellMachinery() {
                 )}
 
                 {error && <Typography color="error">{error}</Typography>}
-                <Button type="submit" variant="contained" disabled={loading}>
+                <Button type="submit" variant="contained" disabled={loading} sx={{ borderRadius: '999px' }}>
                     Submit
                 </Button>
             </Box>

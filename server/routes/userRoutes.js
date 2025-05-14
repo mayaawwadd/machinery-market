@@ -11,7 +11,7 @@ import {
 import { protect } from '../middleware/authMiddleware.js';
 import { adminOnly } from '../middleware/adminMiddleware.js';
 import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
-import { upload } from '../middleware/uploadMiddleware.js';
+import { uploadProfileImage as uploadImage } from '../middleware/uploadMiddleware.js';
 
 // Create a new Express router instance
 const router = express.Router();
@@ -49,7 +49,7 @@ router.route('/').get(protect, adminOnly, getAllUsers);
 router.post(
   '/upload-profile-image',
   protect,
-  upload.single('image'),
+  uploadImage.single('image'),
   uploadProfileImage
 );
 

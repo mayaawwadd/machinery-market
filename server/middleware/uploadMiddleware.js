@@ -1,43 +1,60 @@
-import multer from 'multer'; // Multer handles file uploads
-import path from 'path'; // A node.js module for working with file paths
-import fs from 'fs'; // File system module to create directories
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-// Define where profile images will be stored
-const uploadPath = 'server/public/uploads/profile';
+// Compute __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Ensure the folder exists (recursive: true creates nested folders if they don't exist)
-fs.mkdirSync(uploadPath, { recursive: true });
+/**
+ * Factory to create a Multer uploader for different file types
+ */
+function makeUploader({ subfolder, filePrefix, allowedExt, maxSize }) {
+  // build absolute path to upload directory
+  const uploadDir = path.join(__dirname, '../public/uploads', subfolder);
+  fs.mkdirSync(uploadDir, { recursive: true });
 
-// Multer storage engine configuration
-const storage = multer.diskStorage({
-  // Set the destination folder for the uploaded file
-  destination(req, file, cb) {
-    cb(null, uploadPath); // Save files to /public/uploads/profile
-  },
+  const storage = multer.diskStorage({
+    destination(req, file, cb) {
+      cb(null, uploadDir);
+    },
+    filename(req, file, cb) {
+      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${filePrefix}-${req.user._id}-${uniqueSuffix}${ext}`);
+    },
+  });
 
-  // Customize the uploaded file's name to make it unique
-  filename(req, file, cb) {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const ext = path.extname(file.originalname); //preserve the original extension
-    cb(null, `user-${req.user._id}-${uniqueSuffix}${ext}`);
-  },
+  const fileFilter = (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const ok = allowedExt.test(ext) || allowedExt.test(file.mimetype);
+    cb(ok ? null : new Error(`Only files matching ${allowedExt} allowed`), ok);
+  };
+
+  return multer({ storage, fileFilter, limits: { fileSize: maxSize } });
+}
+
+// Profile image uploader: accept JPEG/PNG up to 5MB
+export const uploadProfileImage = makeUploader({
+  subfolder: 'profile',
+  filePrefix: 'user',
+  allowedExt: /\.(jpe?g|png)$/i,
+  maxSize: 5 * 1024 * 1024,
 });
 
-// File filter to allow only JPEG and PNG images
-const fileFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png/;
-  const ext = path.extname(file.originalname).toLowerCase();
-  const mime = file.mimetype;
+// Invoice uploader: accept PDF/JPEG/PNG up to 10MB
+export const uploadInvoice = makeUploader({
+  subfolder: 'invoices',
+  filePrefix: 'invoice',
+  allowedExt: /\.(pdf|jpe?g|png)$/i,
+  maxSize: 10 * 1024 * 1024,
+});
 
-  if (allowed.test(ext) && allowed.test(mime)) {
-    cb(null, true); // Accept file
-  } else {
-    cb(new Error('Only JPEG and PNG images are allowed')); // Reject file
-  }
-};
-
-export const upload = multer({
-  storage,
-  fileFilter,
-  limites: { fileSize: 5 * 1024 * 1024 }, // Max file size = 5MB
+// Machinery image uploader: accept JPEG/PNG up to 10MB
+export const uploadMachineryImage = makeUploader({
+  subfolder: 'machinery',
+  filePrefix: 'machinery',
+  allowedExt: /\.(jpe?g|png)$/i,
+  maxSize: 10 * 1024 * 1024,
 });
