@@ -163,6 +163,42 @@ export default function SellMachinery() {
         }
     };
 
+    // inside SellMachinery()
+
+    const handleVideoUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setLoading(true);
+        try {
+            const data = new FormData();
+            data.append('video', file);
+            const res = await axiosInstance.post(
+                '/upload/video',
+                data,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            const base = import.meta.env.VITE_API_URL;
+            setForm(f => ({ ...f, video: base + res.data.url }));
+        } catch (err) {
+            console.error('Video upload failed:', err);
+            setError('Failed to upload video');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRemoveVideo = async () => {
+        if (!form.video) return;
+        const filename = form.video.split('/').pop();
+        setForm(f => ({ ...f, video: '' }));
+        try {
+            await axiosInstance.delete(`/upload/video/${filename}`);
+        } catch {
+            console.error('Video delete failed, rolling back');
+            setForm(f => ({ ...f, video: import.meta.env.VITE_API_URL + `/uploads/videos/${filename}` }));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -477,15 +513,42 @@ export default function SellMachinery() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                    <InputLabel htmlFor="video">Video URL</InputLabel>
-                    <OutlinedInput
-                        id="video"
-                        name="video"
-                        value={form.video}
-                        onChange={handleChange}
-                        label="Video URL"
-                    />
+                    <InputLabel shrink>Video File</InputLabel>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                        <Button
+                            variant="outlined"
+                            component="label"
+                            disabled={loading}
+                            sx={{ borderRadius: '999px', mt: 1, mr: 2 }}
+                        >
+                            Upload Video
+                            <input
+                                hidden
+                                accept="video/mp4,video/quicktime,video/x-msvideo,video/*"
+                                type="file"
+                                onChange={handleVideoUpload}
+                            />
+                        </Button>
+
+                        {form.video && (
+                            <>
+                                <Link
+                                    href={form.video}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    underline="hover"
+                                    sx={{ fontSize: '0.875rem', mr: 1 }}
+                                >
+                                    View Video
+                                </Link>
+                                <IconButton size="small" onClick={handleRemoveVideo} sx={{ color: 'error.main' }}>
+                                    <CloseIcon fontSize="small" />
+                                </IconButton>
+                            </>
+                        )}
+                    </Box>
                 </FormControl>
+
 
                 <FormControlLabel
                     control={

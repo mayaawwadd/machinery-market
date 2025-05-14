@@ -58,3 +58,14 @@ export const uploadMachineryImage = makeUploader({
   allowedExt: /\.(jpe?g|png)$/i,
   maxSize: 10 * 1024 * 1024,
 });
+
+// Machinery video uploader: accept MP4/MOV/AVI/MKV up to 10MB
+export const uploadVideo = makeUploader({
+  subfolder: 'videos',
+  filePrefix: 'video',
+  // allow mp4, mov, avi, mkv
+  allowedExt: /\.(mp4|mov|avi|mkv)$/i,
+  // e.g. max 50 MB
+  maxSize: 50 * 1024 * 1024,
+});
+
