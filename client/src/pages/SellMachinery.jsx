@@ -201,52 +201,64 @@ export default function SellMachinery() {
         setError('');
         setLoading(true);
 
-        try {
-            // 1) Create the machinery
-            const { data: machine } = await axiosInstance.post(
-                '/machinery',               // baseURL already includes “/api”
-                {
-                    ...form,
-                    category: Array.isArray(form.category) ? form.category[0] : form.category,
-                    priceCents: Math.round(Number(form.priceJod) * 100)
-                }
-            );
+        // build the common machinery payload
+        const machinePayload = {
+            title: form.title,
+            serialNumber: form.serialNumber,
+            usedHours: Number(form.usedHours),
+            condition: form.condition,
+            qualityDescription: form.qualityDescription,
+            origin: form.origin,
+            voltage: form.voltage,
+            category: form.category,        // now a string
+            equipmentDetails: form.equipmentDetails,
+            originalInvoice: form.originalInvoice,
+            manufacturingDate: form.manufacturingDate,
+            manufacturer: form.manufacturer,
+            priceCents: Number(form.priceCents),
+            location: form.location,
+            images: form.images,
+            video: form.video,
+        };
 
-            // 2) If it’s an auction, chain the auction creation
+        try {
             if (form.isAuction) {
-                await axiosInstance.post(
+                // merge in auction fields
+                const payload = {
+                    ...machinePayload,
+                    endTime: auctionData.endTime,
+                    startTime: auctionData.startTime,        // optional
+                    startingPrice: Number(auctionData.startingPrice),
+                    minimumIncrement: Number(auctionData.minimumIncrement),
+                };
+
+                // this will create both the machine and the auction
+                const { data: { auction } } = await axiosInstance.post(
                     '/auctions',
-                    {
-                        machineryId: machine._id,
-                        endTime: auctionData.endTime,
-                        startingPrice: Number(auctionData.startingPrice),
-                        minimumIncrement: Number(auctionData.minimumIncrement),
-                    }
+                    payload
                 );
+
+                navigate(`/auctions/${auction._id}`);
+            } else {
+                const { data: machine } = await axiosInstance.post(
+                    '/machinery',
+                    machinePayload
+                );
+                navigate(`/machinery/${machine._id}`);
             }
 
-            // 3) Navigate on success
-            navigate(
-                form.isAuction
-                    ? `/auctions/${machine._id}`
-                    : `/machinery/${machine._id}`
-            );
-
         } catch (err) {
-            // dump full error in console
-            console.error('Error creating machinery:', err.response || err);
-            // show server message if available, otherwise generic
+            console.error('Error submitting form:', err.response || err);
             setError(
                 err.response?.data?.message ||
                 err.response?.statusText ||
                 err.message ||
-                'Server error while creating machinery'
+                'Server error while creating listing'
             );
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <Container maxWidth="md" sx={{ py: 6 }}>
