@@ -8,7 +8,9 @@ import {
     Checkbox,
     FormControl,
     FormControlLabel,
-    FormGroup,
+    FormLabel,
+    RadioGroup,
+    Radio,
     InputLabel,
     OutlinedInput,
     Select,
@@ -34,7 +36,7 @@ export default function SellMachinery() {
         qualityDescription: '',
         origin: '',
         voltage: '',
-        category: [],
+        category: '',
         equipmentDetails: '',
         originalInvoice: '',
         manufacturingDate: '',
@@ -59,11 +61,6 @@ export default function SellMachinery() {
             setForm((f) => ({ ...f, isAuction: checked }));
         } else if (name in auctionData) {
             setAuctionData((a) => ({ ...a, [name]: value }));
-        } else if (name === 'category') {
-            const vals = Array.isArray(form.category) ? [...form.category] : [];
-            if (checked) vals.push(value);
-            else vals.splice(vals.indexOf(value), 1);
-            setForm((f) => ({ ...f, category: vals }));
         } else {
             setForm((f) => ({ ...f, [name]: value }));
         }
@@ -211,7 +208,7 @@ export default function SellMachinery() {
                 {
                     ...form,
                     category: Array.isArray(form.category) ? form.category[0] : form.category,
-                    priceCents: Number(form.priceCents)
+                    priceCents: Math.round(Number(form.priceJod) * 100)
                 }
             );
 
@@ -252,7 +249,7 @@ export default function SellMachinery() {
 
 
     return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
+        <Container maxWidth="md" sx={{ py: 6 }}>
             <Typography variant="h4" fontWeight={700} gutterBottom>
                 Sell Machinery
             </Typography>
@@ -272,7 +269,7 @@ export default function SellMachinery() {
                         </FormControl>
                     </Grid>
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth required>
                             <InputLabel htmlFor="serialNumber">Serial Number</InputLabel>
                             <OutlinedInput
                                 id="serialNumber"
@@ -287,7 +284,7 @@ export default function SellMachinery() {
 
                 <Grid container spacing={1}>
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth required>
                             <InputLabel id="condition-label">Condition</InputLabel>
                             <Select
                                 labelId="condition-label"
@@ -299,14 +296,14 @@ export default function SellMachinery() {
                             >
                                 {conditions.map((c) => (
                                     <MenuItem key={c} value={c}>
-                                        {c}
+                                        {c.charAt(0).toUpperCase() + c.slice(1)}
                                     </MenuItem>
                                 ))}
                             </Select>
                         </FormControl>
                     </Grid>
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth required>
                             <InputLabel htmlFor="usedHours">Used Hours</InputLabel>
                             <OutlinedInput
                                 id="usedHours"
@@ -320,22 +317,9 @@ export default function SellMachinery() {
                     </Grid>
                 </Grid>
 
-                <FormControl fullWidth>
-                    <InputLabel htmlFor="qualityDescription">Quality Description</InputLabel>
-                    <OutlinedInput
-                        id="qualityDescription"
-                        name="qualityDescription"
-                        value={form.qualityDescription}
-                        onChange={handleChange}
-                        multiline
-                        rows={2}
-                        label="Quality Description"
-                    />
-                </FormControl>
-
                 <Grid container spacing={1}>
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth required>
                             <InputLabel htmlFor="origin">Origin</InputLabel>
                             <OutlinedInput
                                 id="origin"
@@ -347,7 +331,7 @@ export default function SellMachinery() {
                         </FormControl>
                     </Grid>
                     <Grid item size={{ xs: 12, sm: 6 }}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth required>
                             <InputLabel htmlFor="voltage">Voltage</InputLabel>
                             <OutlinedInput
                                 id="voltage"
@@ -360,24 +344,41 @@ export default function SellMachinery() {
                     </Grid>
                 </Grid>
 
-                <FormGroup row>
-                    {categories.map((cat) => (
-                        <FormControlLabel
-                            key={cat}
-                            control={
-                                <Checkbox
-                                    name="category"
-                                    value={cat}
-                                    checked={form.category.includes(cat)}
-                                    onChange={handleChange}
-                                />
-                            }
-                            label={cat.charAt(0).toUpperCase() + cat.slice(1)}
-                        />
-                    ))}
-                </FormGroup>
+                <FormControl fullWidth required>
+                    <InputLabel id="category-label">Category</InputLabel>
+                    <Select
+                        labelId="category-label"
+                        id="category"
+                        name="category"
+                        value={form.category}
+                        onChange={handleChange}
+                        label="Category"
+                        renderValue={(val) =>
+                            val ? val.charAt(0).toUpperCase() + val.slice(1) : ''
+                        }
+                    >
+                        {categories.map((cat) => (
+                            <MenuItem key={cat} value={cat}>
+                                {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
 
-                <FormControl fullWidth>
+                <FormControl fullWidth required>
+                    <InputLabel htmlFor="qualityDescription">Quality Description</InputLabel>
+                    <OutlinedInput
+                        id="qualityDescription"
+                        name="qualityDescription"
+                        value={form.qualityDescription}
+                        onChange={handleChange}
+                        multiline
+                        rows={2}
+                        label="Quality Description"
+                    />
+                </FormControl>
+
+                <FormControl fullWidth required>
                     <InputLabel htmlFor="equipmentDetails">Equipment Details</InputLabel>
                     <OutlinedInput
                         id="equipmentDetails"
@@ -390,90 +391,64 @@ export default function SellMachinery() {
                     />
                 </FormControl>
 
-                <FormControl fullWidth>
-                    <InputLabel shrink>Original Invoice</InputLabel>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <Button variant="outlined" component="label" disabled={loading} sx={{ borderRadius: '999px', mt: 1, mr: 2 }}>
-                            Upload Invoice
-                            <input
-                                hidden
-                                accept=".pdf,image/jpeg,image/png"
-                                type="file"
-                                onChange={handleInvoiceUpload}
+                <Grid container spacing={1}>
+                    <Grid item size={{ xs: 12, sm: 6 }}>
+                        <FormControl fullWidth required>
+                            <InputLabel htmlFor="manufacturer">Manufacturer</InputLabel>
+                            <OutlinedInput
+                                id="manufacturer"
+                                name="manufacturer"
+                                value={form.manufacturer}
+                                onChange={handleChange}
+                                label="Manufacturer"
                             />
-                        </Button>
+                        </FormControl>
+                    </Grid>
+                    <Grid item size={{ xs: 12, sm: 6 }}>
+                        <FormControl fullWidth required>
+                            <InputLabel shrink htmlFor="manufacturingDate">Manufacturing Date</InputLabel>
+                            <OutlinedInput
+                                id="manufacturingDate"
+                                name="manufacturingDate"
+                                type="date"
+                                value={form.manufacturingDate}
+                                onChange={handleChange}
+                                label="Manufacturing Date"
+                            />
+                        </FormControl>
+                    </Grid>
+                </Grid>
 
-                        {form.originalInvoice && (
-                            <>
-                                <Link
-                                    href={form.originalInvoice}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    underline="hover"
-                                    sx={{ fontSize: '0.875rem' }}
-                                >
-                                    View Invoice
-                                </Link>
-                                <IconButton
-                                    size="small"
-                                    onClick={handleRemoveInvoice}
-                                    sx={{ color: 'error.main' }}
-                                >
-                                    <CloseIcon fontSize="small" />
-                                </IconButton>
-                            </>
-                        )}
-                    </Box>
-                </FormControl>
-
-                <FormControl fullWidth>
-                    <InputLabel shrink htmlFor="manufacturingDate">Manufacturing Date</InputLabel>
-                    <OutlinedInput
-                        id="manufacturingDate"
-                        name="manufacturingDate"
-                        type="date"
-                        value={form.manufacturingDate}
-                        onChange={handleChange}
-                        label="Manufacturing Date"
-                    />
-                </FormControl>
-
-                <FormControl fullWidth>
-                    <InputLabel htmlFor="manufacturer">Manufacturer</InputLabel>
-                    <OutlinedInput
-                        id="manufacturer"
-                        name="manufacturer"
-                        value={form.manufacturer}
-                        onChange={handleChange}
-                        label="Manufacturer"
-                    />
-                </FormControl>
-
-                <FormControl fullWidth required>
-                    <InputLabel htmlFor="priceCents">Price (in cents)</InputLabel>
-                    <OutlinedInput
-                        id="priceCents"
-                        name="priceCents"
-                        type="number"
-                        value={form.priceCents}
-                        onChange={handleChange}
-                        label="Price (in cents)"
-                    />
-                </FormControl>
-
-                <FormControl fullWidth>
-                    <InputLabel htmlFor="location">Location</InputLabel>
-                    <OutlinedInput
-                        id="location"
-                        name="location"
-                        value={form.location}
-                        onChange={handleChange}
-                        label="Location"
-                    />
-                </FormControl>
+                <Grid container spacing={1}>
+                    <Grid item size={{ xs: 12, sm: 6 }}>
+                        <FormControl fullWidth required>
+                            <InputLabel htmlFor="priceCents">Price</InputLabel>
+                            <OutlinedInput
+                                id="priceCents"
+                                name="priceCents"
+                                type="number"
+                                value={form.priceCents}
+                                onChange={handleChange}
+                                label="Price (in cents)"
+                            />
+                        </FormControl>
+                    </Grid>
+                    <Grid item size={{ xs: 12, sm: 6 }}>
+                        <FormControl fullWidth required>
+                            <InputLabel htmlFor="location">Location</InputLabel>
+                            <OutlinedInput
+                                id="location"
+                                name="location"
+                                value={form.location}
+                                onChange={handleChange}
+                                label="Location"
+                            />
+                        </FormControl>
+                    </Grid>
+                </Grid>
 
                 {/* Image upload & preview */}
-                <FormControl fullWidth>
+                <FormControl fullWidth required>
                     <InputLabel shrink>Images</InputLabel>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, my: 1, py: 1, px: 4 }}>
                         {form.images.map((url, i) => (
@@ -512,43 +487,83 @@ export default function SellMachinery() {
                     </Button>
                 </FormControl>
 
-                <FormControl fullWidth>
-                    <InputLabel shrink>Video File</InputLabel>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <Button
-                            variant="outlined"
-                            component="label"
-                            disabled={loading}
-                            sx={{ borderRadius: '999px', mt: 1, mr: 2 }}
-                        >
-                            Upload Video
-                            <input
-                                hidden
-                                accept="video/mp4,video/quicktime,video/x-msvideo,video/*"
-                                type="file"
-                                onChange={handleVideoUpload}
-                            />
-                        </Button>
-
-                        {form.video && (
-                            <>
-                                <Link
-                                    href={form.video}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    underline="hover"
-                                    sx={{ fontSize: '0.875rem', mr: 1 }}
+                <Grid container spacing={2}>
+                    <Grid item size={{ xs: 12, sm: 6 }}>
+                        <FormControl fullWidth>
+                            <InputLabel shrink>Video File</InputLabel>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                <Button
+                                    variant="outlined"
+                                    component="label"
+                                    disabled={loading}
+                                    sx={{ borderRadius: '999px', mt: 1, mr: 2 }}
                                 >
-                                    View Video
-                                </Link>
-                                <IconButton size="small" onClick={handleRemoveVideo} sx={{ color: 'error.main' }}>
-                                    <CloseIcon fontSize="small" />
-                                </IconButton>
-                            </>
-                        )}
-                    </Box>
-                </FormControl>
+                                    Upload Video
+                                    <input
+                                        hidden
+                                        accept="video/mp4,video/quicktime,video/x-msvideo,video/*"
+                                        type="file"
+                                        onChange={handleVideoUpload}
+                                    />
+                                </Button>
 
+                                {form.video && (
+                                    <>
+                                        <Link
+                                            href={form.video}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            underline="hover"
+                                            sx={{ fontSize: '0.875rem', mr: 1 }}
+                                        >
+                                            View Video
+                                        </Link>
+                                        <IconButton size="small" onClick={handleRemoveVideo} sx={{ color: 'error.main' }}>
+                                            <CloseIcon fontSize="small" />
+                                        </IconButton>
+                                    </>
+                                )}
+                            </Box>
+                        </FormControl>
+                    </Grid>
+                    <Grid item size={{ xs: 12, sm: 6 }}>
+                        <FormControl fullWidth required>
+                            <InputLabel shrink>Original Invoice</InputLabel>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                                <Button variant="outlined" component="label" disabled={loading} sx={{ borderRadius: '999px', mt: 1, mr: 2 }}>
+                                    Upload Invoice
+                                    <input
+                                        hidden
+                                        accept=".pdf,image/jpeg,image/png"
+                                        type="file"
+                                        onChange={handleInvoiceUpload}
+                                    />
+                                </Button>
+
+                                {form.originalInvoice && (
+                                    <>
+                                        <Link
+                                            href={form.originalInvoice}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            underline="hover"
+                                            sx={{ fontSize: '0.875rem' }}
+                                        >
+                                            View Invoice
+                                        </Link>
+                                        <IconButton
+                                            size="small"
+                                            onClick={handleRemoveInvoice}
+                                            sx={{ color: 'error.main' }}
+                                        >
+                                            <CloseIcon fontSize="small" />
+                                        </IconButton>
+                                    </>
+                                )}
+                            </Box>
+                        </FormControl>
+                    </Grid>
+                </Grid>
 
                 <FormControlLabel
                     control={
