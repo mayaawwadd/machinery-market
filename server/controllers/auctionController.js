@@ -12,12 +12,6 @@ import { scheduleAuctionClose } from '../utils/auctionScheduler.js';
  * @route   POST /api/auctions
  * @access  Seller (protect)
  */
-// controllers/auctionController.js
-import asyncHandler from 'express-async-handler';
-import Auction from '../models/auctionModel.js';
-import Machinery from '../models/machineryModel.js';
-// …
-
 export const createAuction = asyncHandler(async (req, res) => {
   let {
     machineryId,
@@ -25,7 +19,6 @@ export const createAuction = asyncHandler(async (req, res) => {
     endTime,
     startingPrice,
     minimumIncrement = 1,
-    // anything else coming from the SellMachinery form that belongs on the machine:
     title,
     serialNumber,
     usedHours,
