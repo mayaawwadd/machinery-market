@@ -288,7 +288,7 @@ export const purchaseAuction = asyncHandler(async (req, res) => {
   }
 
   // 3) Only the winner can buy
-  if (auction.winner.toString() !== userId.toString()) {
+  if (auction.currentBidBy.toString() !== userId.toString()) {
     return res.status(403).json({ message: 'You are not the winner' });
   }
 
@@ -306,7 +306,7 @@ export const purchaseAuction = asyncHandler(async (req, res) => {
     seller: auction.seller._id,
     machinery: auction.machine._id,
     auction: auctionId,
-    amountCents: auction.winnerBid * 100,
+    amountCents: auction.currentBid * 100,
     currency: 'USD',
     paymentMethod: 'paypal',
     paymentStatus: 'pending',

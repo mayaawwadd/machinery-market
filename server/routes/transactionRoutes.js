@@ -21,6 +21,7 @@ router.get('/', protect, adminOnly, getAllTransactions);
 router.post('/paypal/createOrderTest', createOrderTest);
 router.post(
   '/paypal/:transactionId/capturePaymentTest/:paymentId',
+  protect,
   capturePaymentTest
 );
 
