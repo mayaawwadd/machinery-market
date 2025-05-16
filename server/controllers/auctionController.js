@@ -135,10 +135,9 @@ export const getLiveAuctions = asyncHandler(async (req, res) => {
  * @access  Public
  */
 export const getAuctionById = asyncHandler(async (req, res) => {
-  const auction = await Auction.findById(req.params.id).populate(
-    'machine seller',
-    'title equipmentDetails username'
-  );
+  const auction = await Auction.findById(req.params.id)
+    .populate('machine')
+    .populate('seller', 'username email');
 
   if (!auction) {
     return res.status(404).json({ message: 'Auction not found' });

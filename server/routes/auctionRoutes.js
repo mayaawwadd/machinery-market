@@ -6,7 +6,6 @@ import {
   getAuctionById,
   placeBid,
   closeAuction,
-  deleteAuction,
   purchaseAuction,
   deleteAuction,
 } from '../controllers/auctionController.js';
