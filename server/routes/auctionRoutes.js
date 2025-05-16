@@ -7,6 +7,7 @@ import {
   placeBid,
   closeAuction,
   purchaseAuction,
+  deleteAuction,
 } from '../controllers/auctionController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
