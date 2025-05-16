@@ -310,6 +310,33 @@ export const closeAuction = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @desc    Delete an auction (and its machinery)
+ * @route   DELETE /api/auctions/:id
+ * @access  Seller (protect + ownership)
+ */
+export const deleteAuction = asyncHandler(async (req, res) => {
+  const auction = await Auction.findById(req.params.id);
+  if (!auction) {
+    return res.status(404).json({ message: 'Auction not found' });
+  }
+  // only the auction owner can delete
+  if (auction.seller.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: 'Not authorized to delete this auction' });
+  }
+
+  // grab the machine id before deleting the auction
+  const machineId = auction.machine;
+
+  // delete auction…
+  await auction.deleteOne();
+
+  // …then delete the machine (or just flip isAuction: false if you’d rather keep the listing)
+  await Machinery.findByIdAndDelete(machineId);
+
+  res.status(200).json({ message: 'Auction and its machinery deleted successfully' });
+});
+
+/**
  * @desc    Create a purchase for an auction winner
  * @route   POST /api/auctions/:auctionId/purchase
  * @access  Buyer (protect + selfOrAdmin?)
