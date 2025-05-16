@@ -6,6 +6,7 @@ import {
   getAuctionById,
   placeBid,
   closeAuction,
+  deleteAuction,
   purchaseAuction,
 } from '../controllers/auctionController.js';
 import { protect } from '../middleware/authMiddleware.js';

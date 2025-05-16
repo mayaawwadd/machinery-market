@@ -13,8 +13,10 @@ import Profile from './pages/Profile';
 import BuyMachinery from './pages/BuyMachinery';
 import SellMachinery from './pages/SellMachinery';
 import Auctions from './pages/Auctions';
+import AuctionDetails from './pages/AuctionDetails';
 import CancelPayment from './pages/cancelPayment';
 import CompletePayment from './pages/completePayment';
+import MachineryDetails from './pages/MachineryDetails';
 import PaypalPayment from './components/payment/paypalPayment';
 
 const router = createBrowserRouter([
@@ -27,8 +29,10 @@ const router = createBrowserRouter([
       { path: 'register', element: <Register /> },
       { path: 'profile', element: <Profile /> },
       { path: 'machinery/buy', element: <BuyMachinery /> },
+      { path: 'machinery/:id', element: <MachineryDetails /> },
       { path: 'machinery/sell', element: <SellMachinery /> },
       { path: 'machinery/auctions', element: <Auctions /> },
+      { path: 'auctions/:id', element: <AuctionDetails /> },
       //paypal flow
       { path: 'paypal', element: <PaypalPayment /> },
       { path: 'complete-payment', element: <CompletePayment /> },
