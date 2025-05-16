@@ -37,7 +37,7 @@ export default function AuctionsPage() {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, minHeight: 'calc(100vh - 12rem)' }}>
                 <CircularProgress />
             </Box>
         );

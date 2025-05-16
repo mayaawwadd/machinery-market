@@ -7,121 +7,97 @@ import {
     Typography,
     CardActions,
     Button,
-    Box
+    Box,
+    Chip,
+    useTheme
 } from '@mui/material';
+import { useTheme as useAppTheme } from '../context/ThemeContext';
 import { Link as RouterLink } from 'react-router-dom';
 import dayjs from 'dayjs';
 import axiosInstance from '../services/axiosInstance';
 
 /**
- * AuctionCard displays summary information for an auction,
- * including details fetched from the Machinery collection.
+ * AuctionCard displays an auction preview with key details only:
+ * image, title, current bid, and end date.
  */
 export default function AuctionCard({ auction }) {
-    const [timeLeft, setTimeLeft] = useState('');
-    // start with populated fields (may be partial)
     const [machine, setMachine] = useState(auction.machine);
+    const theme = useTheme();
+    const { mode } = useAppTheme();
+    const color = mode === 'light' ? theme.palette.secondary.main : theme.default;
 
-    // Fetch full machine details if not fully populated
+    // fetch full machine data if needed (images)
     useEffect(() => {
-        if (!machine.images || !machine.priceCents) {
-            const fetchMachine = async () => {
+        if (!machine.images) {
+            (async () => {
                 try {
-                    const { data } = await axiosInstance.get(`/machinery/${auction.machine._id}`);
+                    const { data } = await axiosInstance.get(
+                        `/machinery/${auction.machine._id}`
+                    );
                     setMachine(data);
                 } catch (err) {
-                    console.error('Failed to fetch machine details:', err);
+                    console.error('Error fetching machine:', err);
                 }
-            };
-            fetchMachine();
+            })();
         }
-    }, [auction.machine._id]);
+    }, [auction.machine._id, machine]);
 
-    // Countdown timer logic
-    useEffect(() => {
-        if (!auction.isActive) {
-            setTimeLeft('Ended');
-            return;
-        }
-
-        const computeTimeLeft = () => {
-            const now = dayjs();
-            const end = dayjs(auction.endTime);
-            const diffMs = end.diff(now);
-            if (diffMs <= 0) {
-                setTimeLeft('Ended');
-                return;
-            }
-            const d = {
-                days: Math.floor(diffMs / (1000 * 60 * 60 * 24)),
-                hours: Math.floor((diffMs / (1000 * 60 * 60)) % 24),
-                minutes: Math.floor((diffMs / (1000 * 60)) % 60),
-                seconds: Math.floor((diffMs / 1000) % 60),
-            };
-            setTimeLeft(`${d.days}d ${d.hours}h ${d.minutes}m ${d.seconds}s`);
-        };
-
-        computeTimeLeft();
-        const timer = setInterval(computeTimeLeft, 1000);
-        return () => clearInterval(timer);
-
-    }, [auction.endTime, auction.isActive]);
-
-
-    // Display values
-    const imageUrl = machine.images?.[0];
+    const imageUrl = machine.images?.[0] || '/placeholder.jpg';
     const title = machine.title;
     const currentBid = auction.currentBid > 0 ? auction.currentBid : auction.startingPrice;
-    const priceJod = (machine.priceCents / 100).toFixed(2);
-    const condition = machine.condition
-        ? machine.condition.charAt(0).toUpperCase() + machine.condition.slice(1)
-        : '';
+    const bidJod = (currentBid / 100).toFixed(2);
+    const endsOn = dayjs(auction.endTime).format('MMM D, YYYY h:mm A');
     const category = machine.category
         ? machine.category.charAt(0).toUpperCase() + machine.category.slice(1)
         : '';
 
+
     return (
-        <Card sx={{ maxWidth: 345, display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Card
+            component={RouterLink}
+            to={`/auctions/${auction._id}`}
+            sx={{
+                borderRadius: 3,
+                flex: 1,
+                textDecoration: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                width: '20rem',
+                boxShadow: 1,
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: 2,
+                },
+            }}
+        >
             <CardMedia
                 component="img"
-                height="180"
+                height="160"
                 image={imageUrl}
                 alt={title}
+                sx={{ objectFit: 'cover' }}
             />
+
             <CardContent sx={{ flexGrow: 1 }}>
-                <Typography gutterBottom variant="h6" component="div" noWrap>
+                <Typography variant="h6" noWrap gutterBottom>
                     {title}
                 </Typography>
-                <Box sx={{ mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                        Price: <strong>{priceJod} JOD</strong>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Current Bid: <strong>{(currentBid / 100).toFixed(2)} JOD</strong>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Category: <strong>{category}</strong>
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        Location: <strong>{machine.location}</strong>
-                    </Typography>
-                    {auction.isActive ? (
+                <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" color="text.secondary">
-                            Time Left: <strong>{timeLeft}</strong>
+                            Current Bid: <strong>{bidJod} JOD</strong>
                         </Typography>
-                    ) : (
-                        <Typography variant="body2" color="text.secondary">
-                            Status: <strong>Ended</strong>
-                        </Typography>
-                    )}
+                        <Chip label={category} size="small" sx={{ textTransform: 'capitalize', backgroundColor: color }} />
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Ends on: <strong>{endsOn}</strong>
+                    </Typography>
                 </Box>
             </CardContent>
-            <CardActions>
-                <Button
-                    size="small"
-                    component={RouterLink}
-                    to={`/auctions/${auction._id}`}
-                >
+
+            <CardActions sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Button size="small" color="primary" sx={{ borderRadius: '999px', px: 1 }}>
                     View Auction
                 </Button>
             </CardActions>
