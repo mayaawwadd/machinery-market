@@ -1,5 +1,4 @@
-// src/pages/AuctionDetail.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import {
     Container,
@@ -15,6 +14,7 @@ import {
 } from '@mui/material';
 import axiosInstance from '../services/axiosInstance';
 import { MachinerySpecs } from '../components/MachinerySpecs';
+import { io } from 'socket.io-client';
 
 export default function AuctionDetails() {
     const { id } = useParams();
@@ -23,6 +23,7 @@ export default function AuctionDetails() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [bidAmount, setBidAmount] = useState('');
+    const socket = useRef(null);
 
     useEffect(() => {
         (async () => {
@@ -37,7 +38,35 @@ export default function AuctionDetails() {
                 setLoading(false);
             }
         })();
+        console.log('🔌 Connecting socket to', import.meta.env.VITE_API_URL);
+        // Connect socket and join 'joinAuction' room
+        socket.current = io(import.meta.env.VITE_API_URL, {
+            // transports: ['websocket'],
+            withCredentials: true
+        });
+        socket.current.on('connect', () => {
+            console.log('✅ Socket connected', socket.current.id);
+            socket.current.emit('joinAuction', id);
+        });
+
+        socket.current.on('bidPlaced', ({ currentBid, bid }) => {
+            setAuction(a => ({ ...a, currentBid }));
+            // prepare the new bid into bid history
+            setBids(bs => [bid, ...bs]);
+        });
+
+        // Listen for 'auctionClosed'
+        socket.current.on('auctionClosed', ({ winner, winnerBid }) => {
+            setAuction(a => ({ ...a, isActive: false, winner, currentBid: winnerBid }));
+        });
+
+        // Clean up on unmount 
+        return () => {
+            socket.current.emit('leaveAuction', id);
+            socket.current.disconnect();
+        };
     }, [id]);
+
 
     const handlePlaceBid = async () => {
         try {
