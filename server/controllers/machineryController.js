@@ -86,14 +86,14 @@ export const getAllMachinery = async (req, res) => {
     const parsedCategory = Array.isArray(category)
       ? category
       : category
-        ? [category]
-        : [];
+      ? [category]
+      : [];
 
     const parsedCondition = Array.isArray(condition)
       ? condition
       : condition
-        ? [condition]
-        : [];
+      ? [condition]
+      : [];
 
     const query = {
       usedHours: {
@@ -129,7 +129,6 @@ export const getAllMachinery = async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching listings' });
   }
 };
-
 
 /**
  * @desc    Fetch a single machinery listing by ID
@@ -208,7 +207,9 @@ export const deleteMachinery = async (req, res) => {
       return res.status(404).json({ message: 'Machinery not found' });
     }
     if (req.user && machinery.seller.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to delete this listing' });
+      return res
+        .status(403)
+        .json({ message: 'Not authorized to delete this listing' });
     }
 
     // delete the machinery…
@@ -217,7 +218,9 @@ export const deleteMachinery = async (req, res) => {
     // …and all auctions that reference it
     await Auction.deleteMany({ machine: req.params.id });
 
-    res.json({ message: 'Machinery and related auctions deleted successfully' });
+    res.json({
+      message: 'Machinery and related auctions deleted successfully',
+    });
   } catch (err) {
     console.error('❌ Error deleting machinery:', err);
     res.status(500).json({ message: 'Server error while deleting listing' });
@@ -236,6 +239,11 @@ export const getMyMachinery = async (req, res) => {
     const sellerId = req.user?._id;
 
     const listings = await Machinery.find({ seller: sellerId });
+    if (listings.length === 0) {
+      return res
+        .status(404)
+        .json({ message: 'No machinery listings found for this seller' });
+    }
     res.json(listings);
   } catch (err) {
     console.error('❌ Error fetching seller machinery:', err);
