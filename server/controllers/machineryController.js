@@ -1,4 +1,5 @@
 import Machinery from '../models/machineryModel.js';
+import Auction from '../models/auctionModel.js';
 
 /**
  * @desc    Create a new machinery listing
@@ -203,20 +204,20 @@ export const updateMachinery = async (req, res) => {
 export const deleteMachinery = async (req, res) => {
   try {
     const machinery = await Machinery.findById(req.params.id);
-
     if (!machinery) {
       return res.status(404).json({ message: 'Machinery not found' });
     }
-
-    // Ensure user is the seller
     if (req.user && machinery.seller.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: 'Not authorized to delete this listing' });
+      return res.status(403).json({ message: 'Not authorized to delete this listing' });
     }
 
+    // delete the machinery…
     await machinery.deleteOne();
-    res.json({ message: 'Machinery deleted successfully' });
+
+    // …and all auctions that reference it
+    await Auction.deleteMany({ machine: req.params.id });
+
+    res.json({ message: 'Machinery and related auctions deleted successfully' });
   } catch (err) {
     console.error('❌ Error deleting machinery:', err);
     res.status(500).json({ message: 'Server error while deleting listing' });

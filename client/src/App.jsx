@@ -11,6 +11,8 @@ import Login from './pages/Auth/login/Login';
 import Register from './pages/Auth/register/Register';
 import Profile from './pages/Profile';
 import BuyMachinery from './pages/BuyMachinery';
+import SellMachinery from './pages/SellMachinery';
+import Auctions from './pages/Auctions';
 import CancelPayment from './pages/cancelPayment';
 import CompletePayment from './pages/completePayment';
 import PaypalPayment from './components/payment/paypalPayment';
@@ -25,6 +27,8 @@ const router = createBrowserRouter([
       { path: 'register', element: <Register /> },
       { path: 'profile', element: <Profile /> },
       { path: 'machinery/buy', element: <BuyMachinery /> },
+      { path: 'machinery/sell', element: <SellMachinery /> },
+      { path: 'machinery/auctions', element: <Auctions /> },
       //paypal flow
       { path: 'paypal', element: <PaypalPayment /> },
       { path: 'complete-payment', element: <CompletePayment /> },

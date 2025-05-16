@@ -22,6 +22,7 @@ import emailRoutes from './routes/testEmail.js';
 import mongoose, { mongo } from 'mongoose';
 import Auction from './models/auctionModel.js';
 import { scheduleAuctionClose } from './utils/auctionScheduler.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import e from 'express';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -40,12 +41,15 @@ app.use(express.json()); // Parse JSON request bodies
 // Serve static files from /public
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/machinery', machineryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/auctions', auctionRoutes);
+app.use('/api', uploadRoutes);
 app.use('/api', emailRoutes);
 
 const server = http.createServer(app);

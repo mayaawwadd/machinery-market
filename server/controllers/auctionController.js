@@ -13,48 +13,90 @@ import { scheduleAuctionClose } from '../utils/auctionScheduler.js';
  * @access  Seller (protect)
  */
 export const createAuction = asyncHandler(async (req, res) => {
-  const { machineryId, startTime, endTime, startingPrice, minimumIncrement } =
-    req.body;
+  let {
+    machineryId,
+    startTime,
+    endTime,
+    startingPrice,
+    minimumIncrement = 1,
+    title,
+    serialNumber,
+    usedHours,
+    condition,
+    qualityDescription,
+    origin,
+    voltage,
+    category,
+    equipmentDetails,
+    originalInvoice,
+    manufacturingDate,
+    manufacturer,
+    priceCents,
+    location,
+    images,
+    video,
+  } = req.body;
 
-  if (!machineryId || !endTime || startingPrice == null) {
-    return res
-      .status(400)
-      .json({ message: 'machineryId, endTime & startingPrice are required' });
+  // 1) If no machineryId was passed, create the Machinery record first
+  if (!machineryId) {
+    // validate required machine fields...
+    if (!title || !serialNumber || priceCents == null) {
+      return res.status(400).json({ message: 'Missing required machine fields' });
+    }
+    const machine = await Machinery.create({
+      title,
+      serialNumber,
+      usedHours,
+      condition,
+      qualityDescription,
+      origin,
+      voltage,
+      category,
+      equipmentDetails,
+      originalInvoice,
+      manufacturingDate,
+      manufacturer,
+      priceCents,
+      location,
+      images,
+      video,
+      seller: req.user._id,
+      isAuction: true,       // mark it as auctioned
+    });
+    machineryId = machine._id;
+  } else {
+    // if machine already exists, flip its isAuction flag
+    await Machinery.findByIdAndUpdate(machineryId, { isAuction: true });
   }
 
-  // Optional extra validation:
+  // 2) Validate auction-specific inputs
+  if (!endTime || startingPrice == null) {
+    return res.status(400).json({
+      message: 'endTime and startingPrice are required for auction'
+    });
+  }
   if (startTime && new Date(startTime) >= new Date(endTime)) {
-    return res.status(400).json({ message: 'endTime must be after startTime' });
+    return res.status(400).json({ message: 'endTime must come after startTime' });
   }
 
+  // 3) Create the auction
   const auction = await Auction.create({
     machine: machineryId,
     seller: req.user._id,
     startTime: startTime ? new Date(startTime) : Date.now(),
     endTime: new Date(endTime),
     startingPrice,
-    minimumIncrement: minimumIncrement ?? 1,
+    minimumIncrement,
     isActive: true,
   });
 
-  if (!auction) {
-    return res.status(500).json({ message: 'Auction creation failed' });
-  }
-
-  // Mark the machinery as “now being auctioned”
-  await Machinery.findByIdAndUpdate(machineryId, { isAuction: true });
-
-  // Schedule auto-close
+  // 4) Schedule auto-close & notify
   scheduleAuctionClose(auction);
-
-  // Broadcast over sockets
   const io = req.app.get('io');
-  if (io) {
-    io.emit('auctionCreated', auction);
-  }
+  io?.emit('auctionCreated', auction);
 
   res.status(201).json({
-    message: 'Auction created successfully',
+    message: 'Machine and auction created successfully',
     auction,
   });
 });
@@ -265,6 +307,33 @@ export const closeAuction = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json({ message: 'Auction closed', auction });
+});
+
+/**
+ * @desc    Delete an auction (and its machinery)
+ * @route   DELETE /api/auctions/:id
+ * @access  Seller (protect + ownership)
+ */
+export const deleteAuction = asyncHandler(async (req, res) => {
+  const auction = await Auction.findById(req.params.id);
+  if (!auction) {
+    return res.status(404).json({ message: 'Auction not found' });
+  }
+  // only the auction owner can delete
+  if (auction.seller.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: 'Not authorized to delete this auction' });
+  }
+
+  // grab the machine id before deleting the auction
+  const machineId = auction.machine;
+
+  // delete auction…
+  await auction.deleteOne();
+
+  // …then delete the machine (or just flip isAuction: false if you’d rather keep the listing)
+  await Machinery.findByIdAndDelete(machineId);
+
+  res.status(200).json({ message: 'Auction and its machinery deleted successfully' });
 });
 
 /**
