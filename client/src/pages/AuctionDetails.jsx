@@ -20,10 +20,13 @@ import axiosInstance from '../services/axiosInstance';
 import { MachinerySpecs } from '../components/MachinerySpecs';
 import { io } from 'socket.io-client';
 import Countdown from '../components/CountDown';
+import { showSuccess, showError } from '../utils/toast';
+import { useAuth } from '../context/AuthContext';
 
 export default function AuctionDetails() {
     const { id } = useParams();
     const theme = useTheme();
+    const { user } = useAuth();
     const [auction, setAuction] = useState(null);
     const [bids, setBids] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -72,9 +75,13 @@ export default function AuctionDetails() {
             setAuction(data.auction);
             setBids(data.bids);
             setBidAmount('');
+            showSuccess('Your bid was placed!');
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.message || 'Bid failed');
+            const msg = err.response?.data?.message || 'Bid failed';
+            showError(msg);
+            setError(msg);
         }
     };
 
@@ -122,11 +129,35 @@ export default function AuctionDetails() {
                             </Button>
                         </Stack>
                     ) : (
-                        <Typography variant="h6" color="text.secondary">
-                            {auction.currentBidBy
-                                ? `Winner: ${auction.currentBidBy.username} at ${(auction.currentBid / 100).toFixed(2)} JOD`
-                                : 'No bids were placed.'}
-                        </Typography>
+                        <>
+                            <Typography variant="h6" color="text.secondary">
+                                {auction.currentBidBy
+                                    ? `Winner: ${auction.currentBidBy.username} at ${(auction.currentBid / 100).toFixed(2)} JOD`
+                                    : 'No bids were placed.'}
+                            </Typography>
+                            <Box>
+                                {auction.winner && user?._id === auction.winner.toString() ? (
+                                    // Winner sees “Purchase” CTA
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        component="a"
+                                        href={`/auctions/${auction._id}/purchase`}
+                                    > Complete Purchase
+                                    </Button>
+                                ) : (
+                                    // Other users see who won
+                                    <Typography variant='h6' color='text.primary'>
+                                        This auction has ended. Winner: {" "}
+                                        <strong>
+                                            {auction.winner.username} @{" "}
+                                            {(auction.winnerBid).toFixed(2)} JOD
+                                        </strong>
+                                    </Typography>
+                                )}
+                            </Box>
+                        </>
+
                     )}
                 </Stack>
 
