@@ -13,7 +13,8 @@ import {
     Divider,
     Paper,
     Stack,
-    useTheme
+    useTheme,
+    Chip
 } from '@mui/material';
 import axiosInstance from '../services/axiosInstance';
 import { MachinerySpecs } from '../components/MachinerySpecs';
@@ -84,8 +85,6 @@ export default function AuctionDetails() {
     return (
         <Container sx={{ py: 6 }}>
             <Stack spacing={4}>
-                <Typography variant="h4">Auction: {auction.machine.title}</Typography>
-
                 <Paper elevation={1} sx={{ p: 3 }}>
                     <MachinerySpecs machine={auction.machine} />
                 </Paper>
@@ -134,13 +133,18 @@ export default function AuctionDetails() {
                     <Typography variant="h6" gutterBottom>Bid History</Typography>
                     {bids.length ? (
                         <List disablePadding>
-                            {bids.map(b => (
+                            {bids.map((b, idx) => (
                                 <React.Fragment key={b._id}>
                                     <ListItem sx={{ pl: 0, pr: 0 }}>
                                         <ListItemText
                                             primary={`${b.bidder.username} — ${(b.amount / 100).toFixed(2)} JOD`}
                                             secondary={new Date(b.bidTime).toLocaleString()}
                                         />
+                                        {
+                                            idx === 0 && (
+                                                <Chip label="Highest Bid" size='small' color='success' sx={{ px: 1, ml: 1 }} />
+                                            )
+                                        }
                                     </ListItem>
                                     <Divider component="li" />
                                 </React.Fragment>

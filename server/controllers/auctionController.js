@@ -146,7 +146,7 @@ export const getAuctionById = asyncHandler(async (req, res) => {
   // Load bids (sorted by time)
   const bids = await Bid.find({ auction: auction._id })
     .populate('bidder', 'username')
-    .sort('bidTime');
+    .sort('-bidTime');
 
   res.status(200).json({ auction, bids });
 });
