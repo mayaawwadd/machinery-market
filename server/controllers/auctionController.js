@@ -41,7 +41,9 @@ export const createAuction = asyncHandler(async (req, res) => {
   if (!machineryId) {
     // validate required machine fields...
     if (!title || !serialNumber || priceCents == null) {
-      return res.status(400).json({ message: 'Missing required machine fields' });
+      return res
+        .status(400)
+        .json({ message: 'Missing required machine fields' });
     }
     const machine = await Machinery.create({
       title,
@@ -61,7 +63,7 @@ export const createAuction = asyncHandler(async (req, res) => {
       images,
       video,
       seller: req.user._id,
-      isAuction: true,       // mark it as auctioned
+      isAuction: true, // mark it as auctioned
     });
     machineryId = machine._id;
   } else {
@@ -72,11 +74,13 @@ export const createAuction = asyncHandler(async (req, res) => {
   // 2) Validate auction-specific inputs
   if (!endTime || startingPrice == null) {
     return res.status(400).json({
-      message: 'endTime and startingPrice are required for auction'
+      message: 'endTime and startingPrice are required for auction',
     });
   }
   if (startTime && new Date(startTime) >= new Date(endTime)) {
-    return res.status(400).json({ message: 'endTime must come after startTime' });
+    return res
+      .status(400)
+      .json({ message: 'endTime must come after startTime' });
   }
 
   // 3) Create the auction
@@ -112,7 +116,7 @@ export const getAllAuctions = asyncHandler(async (req, res) => {
     'title equipmentDetails username'
   );
 
-  res.status(200).json(auctions);
+  res.status(201).json(auctions);
 });
 
 /**
@@ -126,7 +130,7 @@ export const getLiveAuctions = asyncHandler(async (req, res) => {
     'title equipmentDetails username'
   );
 
-  res.status(200).json(auctions);
+  res.status(201).json(auctions);
 });
 
 /**
@@ -146,9 +150,9 @@ export const getAuctionById = asyncHandler(async (req, res) => {
   // Load bids (sorted by time)
   const bids = await Bid.find({ auction: auction._id })
     .populate('bidder', 'username')
-    .sort('-bidTime');
+    .sort('bidTime');
 
-  res.status(200).json({ auction, bids });
+  res.status(201).json({ auction, bids });
 });
 
 /**
@@ -305,7 +309,7 @@ export const closeAuction = asyncHandler(async (req, res) => {
     });
   }
 
-  res.status(200).json({ message: 'Auction closed', auction });
+  res.status(201).json({ message: 'Auction closed', auction });
 });
 
 /**
@@ -320,7 +324,9 @@ export const deleteAuction = asyncHandler(async (req, res) => {
   }
   // only the auction owner can delete
   if (auction.seller.toString() !== req.user._id.toString()) {
-    return res.status(403).json({ message: 'Not authorized to delete this auction' });
+    return res
+      .status(403)
+      .json({ message: 'Not authorized to delete this auction' });
   }
 
   // grab the machine id before deleting the auction
@@ -332,7 +338,9 @@ export const deleteAuction = asyncHandler(async (req, res) => {
   // …then delete the machine (or just flip isAuction: false if you’d rather keep the listing)
   await Machinery.findByIdAndDelete(machineId);
 
-  res.status(200).json({ message: 'Auction and its machinery deleted successfully' });
+  res
+    .status(201)
+    .json({ message: 'Auction and its machinery deleted successfully' });
 });
 
 /**

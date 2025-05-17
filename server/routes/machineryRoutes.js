@@ -26,14 +26,14 @@ router.post('/', protect, createMachinery);
  * @desc    Fetch all machinery listings
  * @access  Public
  */
-router.get('/', protect, getAllMachinery);
+router.get('/', getAllMachinery);
 
 /**
  * @route   GET /api/machinery/my
  * @desc    Get machinery listings for the current logged-in user
  * @access  Protected
  */
-router.get('/my', protect, getMyMachinery);
+router.get('/my', getMyMachinery);
 
 /**
  * @route   GET /api/machinery/:id

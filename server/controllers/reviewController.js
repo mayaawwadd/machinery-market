@@ -25,7 +25,7 @@ export const createReview = asyncHandler(async (req, res) => {
     machine,
   });
   if (existingReview) {
-    return res.status(400).json({
+    return res.status(409).json({
       message: 'You have already submitted a review for this machine',
     });
   }
@@ -38,7 +38,7 @@ export const createReview = asyncHandler(async (req, res) => {
     comment,
   });
   const savedReview = await review.save();
-  res.status(200).json(savedReview);
+  res.status(201).json(savedReview);
 });
 
 // @desc    Get all reviews for a seller
@@ -59,10 +59,10 @@ export const getSellerReviews = asyncHandler(async (req, res) => {
   const visibleReviews = reviews.filter((r) => !r.isFlagged);
 
   if (!visibleReviews.length) {
-    return res.status(400).json({ message: 'No visible reviews available' });
+    return res.status(404).json({ message: 'No visible reviews available' });
   }
 
-  res.status(200).json(visibleReviews);
+  res.status(201).json(visibleReviews);
 });
 
 // @desc    Get all reviews
@@ -74,7 +74,7 @@ export const getAllReviews = asyncHandler(async (req, res) => {
     .populate('seller', 'username email')
     .populate('machine', 'title');
 
-  res.status(200).json(reviews);
+  res.status(201).json(reviews);
 });
 
 // @desc    Delete a review
@@ -90,11 +90,11 @@ export const deleteReview = asyncHandler(async (req, res) => {
   const review = await Review.findById(reviewId);
 
   if (!review) {
-    res.status(400).json({ message: 'Review not found' });
+    res.status(404).json({ message: 'Review not found' });
   }
 
   await review.deleteOne();
-  res.status(200).json({ message: 'Review deleted successfully' });
+  res.status(201).json({ message: 'Review deleted successfully' });
 });
 
 // @desc    filter review by rating
@@ -119,7 +119,7 @@ export const filterReviewsByRating = asyncHandler(async (req, res) => {
       .json({ message: 'no reviews found for this rating' });
   }
 
-  res.status(200).json(reviews);
+  res.status(201).json(reviews);
 });
 
 // @desc    get sellers average rating
@@ -160,7 +160,7 @@ export const getAverageRating = asyncHandler(async (req, res) => {
       .status(404)
       .json({ message: 'No reviews found for the given criteria' });
   }
-  res.status(200).json({
+  res.status(201).json({
     averageRating: result[0].averageRating.toFixed(1), //to fixed makes it look nicer ex. 4.33333 to 4.3
     totalReviews: result[0].totalReviews,
   });
@@ -185,7 +185,7 @@ export const flagReview = asyncHandler(async (req, res) => {
 
   const updated = await review.save();
 
-  res.status(200).json({
+  res.status(201).json({
     message: 'review flagged for moderation',
     review: updated,
   });
