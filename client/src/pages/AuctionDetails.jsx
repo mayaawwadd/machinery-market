@@ -19,6 +19,7 @@ import {
 import axiosInstance from '../services/axiosInstance';
 import { MachinerySpecs } from '../components/MachinerySpecs';
 import { io } from 'socket.io-client';
+import Countdown from '../components/CountDown';
 
 export default function AuctionDetails() {
     const { id } = useParams();
@@ -85,49 +86,50 @@ export default function AuctionDetails() {
     return (
         <Container sx={{ py: 6 }}>
             <Stack spacing={4}>
-
                 <MachinerySpecs machine={auction.machine} />
 
+                <Stack spacing={2}>
+                    <Box>
+                        <Typography variant="h5">
+                            Current Bid: {(auction.currentBid || auction.startingPrice) / 100} JOD
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            {auction.isActive && new Date() < new Date(auction.endTime) ? (
+                                <>Ends in: <Countdown endTime={auction.endTime} /></>
+                            ) : (
+                                'CLOSED'
+                            )}
+                        </Typography>
+                    </Box>
 
-                <Paper elevation={1} sx={{ p: 3 }}>
-                    <Stack spacing={2}>
-                        <Box>
-                            <Typography variant="h5">
-                                Current Bid: {(auction.currentBid || auction.startingPrice) / 100} JOD
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Ends: {new Date(auction.endTime).toLocaleString()}
-                            </Typography>
-                        </Box>
+                    {isLive ? (
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+                            <TextField
+                                label={`Your bid should be at least ${auction.currentBid + auction.minimumIncrement} JOD`}
+                                type="number"
+                                value={bidAmount}
+                                onChange={e => setBidAmount(e.target.value)}
+                                size="small"
+                                sx={{ flex: 1 }}
+                            />
+                            <Button
+                                variant="contained"
+                                onClick={handlePlaceBid}
+                                disabled={!bidAmount}
+                                sx={{ whiteSpace: 'nowrap' }}
+                            >
+                                Place Bid
+                            </Button>
+                        </Stack>
+                    ) : (
+                        <Typography variant="h6" color="text.secondary">
+                            {auction.currentBidBy
+                                ? `Winner: ${auction.currentBidBy.username} at ${(auction.currentBid / 100).toFixed(2)} JOD`
+                                : 'No bids were placed.'}
+                        </Typography>
+                    )}
+                </Stack>
 
-                        {isLive ? (
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-                                <TextField
-                                    label="Your Bid (JOD)"
-                                    type="number"
-                                    value={bidAmount}
-                                    onChange={e => setBidAmount(e.target.value)}
-                                    size="small"
-                                    sx={{ flex: 1 }}
-                                />
-                                <Button
-                                    variant="contained"
-                                    onClick={handlePlaceBid}
-                                    disabled={!bidAmount}
-                                    sx={{ whiteSpace: 'nowrap' }}
-                                >
-                                    Place Bid
-                                </Button>
-                            </Stack>
-                        ) : (
-                            <Typography variant="h6" color="text.secondary">
-                                {auction.currentBidBy
-                                    ? `Winner: ${auction.currentBidBy.username} at ${(auction.currentBid / 100).toFixed(2)} JOD`
-                                    : 'No bids were placed.'}
-                            </Typography>
-                        )}
-                    </Stack>
-                </Paper>
 
                 <Paper elevation={1} sx={{ p: 3, maxHeight: 400, overflowY: 'auto' }}>
                     <Typography variant="h6" gutterBottom>Bid History</Typography>
