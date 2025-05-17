@@ -16,7 +16,7 @@ export const purchaseMachinery = asyncHandler(async (req, res) => {
   //validate input
   if (!machineryId || !paymentMethod) {
     return res
-      .status(404)
+      .status(400)
       .json({ message: 'MachineryID and payment method are required' });
   }
 
@@ -68,7 +68,7 @@ export const purchaseMachinery = asyncHandler(async (req, res) => {
 
   const createdTransaction = await transaction.save();
 
-  res.status(200).json({
+  res.status(201).json({
     message: 'Transaction created , Proceed to Payment',
     transaction: createdTransaction,
   });
@@ -95,7 +95,7 @@ export const updateTransactionStatus = asyncHandler(async (req, res) => {
   transaction.paymentStatus = status;
   await transaction.save();
 
-  res.status(200).json({
+  res.status(201).json({
     message: 'Transaction status updated successfully',
     transaction,
   });
@@ -115,7 +115,7 @@ export const getUserTransactions = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Transaction not found' });
   }
 
-  res.status(200).json(transaction);
+  res.status(201).json(transaction);
 });
 
 // @desc    GET all transactions
@@ -125,9 +125,9 @@ export const getAllTransactions = asyncHandler(async (req, res) => {
   const transaction = await Transaction.find();
 
   if (!transaction) {
-    return res.status(400).json({ message: 'no transactions available' });
+    return res.status(404).json({ message: 'no transactions available' });
   }
-  res.status(200).json(transaction);
+  res.status(201).json(transaction);
 });
 // get the paypal access token
 export const getAccessToken = async () => {
@@ -242,7 +242,7 @@ export const createOrderTest = asyncHandler(async (req, res) => {
       paypalOrderId: orderId,
     });
 
-    return res.status(200).json({ orderId });
+    return res.status(201).json({ orderId });
   } catch (err) {
     console.error('PayPal create-order error:', err.response?.body || err);
     return res.status(502).json({
@@ -303,7 +303,7 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
       });
     }
 
-    return res.status(200).json({
+    return res.status(201).json({
       message: 'payment captured successfully',
       capture,
     });
