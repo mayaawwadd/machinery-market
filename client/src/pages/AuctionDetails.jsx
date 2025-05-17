@@ -85,9 +85,9 @@ export default function AuctionDetails() {
     return (
         <Container sx={{ py: 6 }}>
             <Stack spacing={4}>
-                <Paper elevation={1} sx={{ p: 3 }}>
-                    <MachinerySpecs machine={auction.machine} />
-                </Paper>
+
+                <MachinerySpecs machine={auction.machine} />
+
 
                 <Paper elevation={1} sx={{ p: 3 }}>
                     <Stack spacing={2}>
