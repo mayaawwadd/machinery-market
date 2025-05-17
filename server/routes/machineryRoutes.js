@@ -26,7 +26,7 @@ router.post('/', protect, createMachinery);
  * @desc    Fetch all machinery listings
  * @access  Public
  */
-router.get('/', protect, adminOnly, getAllMachinery);
+router.get('/', protect, getAllMachinery);
 
 /**
  * @route   GET /api/machinery/my
