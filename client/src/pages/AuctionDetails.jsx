@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import {
     Container,
     Typography,
@@ -22,6 +22,7 @@ import { io } from 'socket.io-client';
 import Countdown from '../components/CountDown';
 import { showSuccess, showError } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
+
 
 export default function AuctionDetails() {
     const { id } = useParams();
@@ -84,8 +85,8 @@ export default function AuctionDetails() {
         }
     };
 
-    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box>;
-    if (error) return <Container sx={{ mt: 4 }}><Typography color="error">{error}</Typography></Container>;
+    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, minHeight: 'calc(100vh-12rem)' }}><CircularProgress /></Box>;
+    if (error) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, minHeight: 'calc(100vh-12rem)' }}><Typography color="error">{error}</Typography></Box>;
 
     const isLive = auction.isActive && new Date() < new Date(auction.endTime);
 
@@ -141,9 +142,8 @@ export default function AuctionDetails() {
                                 variant="contained"
                                 color="primary"
                                 fullWidth
-                                component="a"
-                                href={`/auctions/${auction._id}/purchase`}
-                            >
+                                component={RouterLink}
+                                to={`/purchase/${auction._id}`} >
                                 Complete Purchase
                             </Button>
                         )

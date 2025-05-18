@@ -1,12 +1,13 @@
 import React from 'react';
+import { Box, Typography, Button } from '@mui/material';
+import { Link } from 'react-router-dom';
 
-const cancelPayment = () => {
+export default function CancelPayment() {
   return (
-    <div>
-      {/* <h2>Payment canceled</h2>
-      <p>your payment was canceled , try again.</p> */}
-    </div>
+    <Box sx={{ textAlign: 'center', mt: 8 }}>
+      <Typography variant="h4" gutterBottom>Payment canceled</Typography>
+      <Typography>You did not complete your payment. Please try again.</Typography>
+      <Button component={Link} to="/" sx={{ mt: 4 }}>Back to home</Button>
+    </Box>
   );
-};
-
-export default cancelPayment;
+}

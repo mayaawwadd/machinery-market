@@ -1,93 +1,62 @@
 // src/components/PaypalPayment.jsx
 import React from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
+import { useNavigate } from 'react-router-dom';
 
-const paypalPayment = () => {
-  // 1) Configure the PayPal JS SDK
-  // const initialOptions = {
-  //   'client-id': import.meta.env.VITE_PAYPAL_CLIENTID,
-  //   currency: 'USD',
-  //   intent: 'capture',
-  // };
+export default function PaypalPayment({ transactionId }) {
+  const navigate = useNavigate();
 
-  // // 2) Style the buttons
-  // const style = {
-  //   shape: 'rect',
-  //   layout: 'vertical',
-  // };
+  const initialOptions = {
+    'client-id': import.meta.env.VITE_PAYPAL_CLIENTID,
+    currency: 'USD',
+    intent: 'capture',
+  };
 
-  // // 3) Called when the buyer clicks “PayPal”
-  // const onCreateOrder = async () => {
-  //   try {
-  //     // hit your server’s PayPal “create order” endpoint
-  //     const response = await fetch('/api/transactions/paypal/createOrderTest', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       // if you need to pass any extra data (like a transactionId or amount):
-  //       // body: JSON.stringify({ transactionId, amount }),
-  //     });
+  const style = { shape: 'rect', layout: 'vertical' };
 
-  //     if (!response.ok) {
-  //       throw new Error(`Create order failed: ${response.status}`);
-  //     }
+  // 3) Create the PayPal order on your server
+  const createOrder = async () => {
+    const res = await fetch('/api/transactions/paypal/createOrderTest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transactionId }),
+    });
+    if (!res.ok) throw new Error('Could not create PayPal order');
+    const { orderId } = await res.json();
+    return orderId;
+  };
 
-  //     const { orderId } = await response.json();
-  //     return orderId;
-  //   } catch (error) {
-  //     console.error('Error creating PayPal order:', error);
-  //     throw error;
-  //   }
-  // };
+  // 4) When buyer approves in PayPal popup
+  const onApprove = async data => {
+    try {
+      // note: your route is POST /paypal/:transactionId/capturePaymentTest/:paymentId
+      const res = await fetch(
+        `/api/transactions/paypal/${transactionId}/capturePaymentTest/${data.orderID}`,
+        { method: 'POST' }
+      );
+      if (!res.ok) throw new Error('Capture failed');
+      // success → redirect to your confirmation page
+      navigate('/complete-payment');
+    } catch (err) {
+      console.error(err);
+      navigate('/cancel-payment');
+    }
+  };
 
-  // // 4) Called when the buyer approves the payment in the popup
-  // const onApprove = async (data) => {
-  //   try {
-  //     if (!data?.orderID) throw new Error('invalid order ID');
-
-  //     const response = await fetch(
-  //       `/api/transactions/paypal/capturePaymentTest/${data.orderID}`,
-  //       {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //         },
-  //       }
-  //     );
-  //     const result = await response.json();
-  //     window.location.href = '/complete-payment';
-  //     // you can now call your server to capture the order, e.g.:
-  //     // await fetch("/api/paypal/capture-order", {
-  //     //   method: "POST",
-  //     //   headers: { "Content-Type": "application/json" },
-  //     //   body: JSON.stringify({ orderId: data.orderID })
-  //     // });
-  //     // after successful capture, redirect to your "complete" page:
-  //     // window.location.href = "/complete-payment";
-  //   } catch (error) {
-  //     console.error('Error verifying PayPal order:', error);
-  //     // on error, send user to cancel page:
-  //     window.location.href = '/cancel-payment';
-  //   }
-  // };
-
-  // // 5) Error handler
-  // const onError = (err) => {
-  //   console.error('PayPal error:', err);
-  // };
+  const onError = err => {
+    console.error('PayPal error', err);
+    navigate('/cancel-payment');
+  };
 
   return (
     <PayPalScriptProvider options={initialOptions}>
-      {/* <PayPalButtons
+      <PayPalButtons
         style={style}
-        createOrder={onCreateOrder}
+        createOrder={createOrder}
         onApprove={onApprove}
         onError={onError}
         fundingSource="paypal"
-      /> */}
+      />
     </PayPalScriptProvider>
   );
-};
-
-export default paypalPayment;
+}
