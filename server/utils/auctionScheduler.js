@@ -1,40 +1,48 @@
 import Auction from '../models/auctionModel.js';
-import { io } from 'socket.io-client';
 import User from '../models/userModel.js';
 import { sendMail } from './emailService.js';
 
 const timers = new Map();
 
-//this function is not used yet , but its a clean code practice that i will use in the future
+/**
+ * On server startup, schedule all still‐active auctions.
+ */
 export function scheduleActiveAuctions(io) {
   Auction.find({ isActive: true })
     .lean()
-    .then((auctions) => {
-      auctions.forEach((auction) => scheduleAuctionClose(auction, io));
-      console.log(`Scheduled active auctions ${auctions.length}`);
+    .then(auctions => {
+      console.log(`Scheduling ${auctions.length} active auctions`);
+      auctions.forEach(a => scheduleAuctionClose(a, io));
     })
-    .catch((err) => {
-      console.error('Error scheduling active auctions:', err);
-    });
+    .catch(err => console.error('Error scheduling active auctions:', err));
 }
 
-// Function to close an auction by ID
-// This function is called when the auction time is up
+/**
+ * Closes the auction, emits to clients, and notifies users.
+ */
 export async function closeAuctionById(io, auctionId) {
   const auction = await Auction.findById(auctionId)
     .populate('machine', 'title')
-    .populate('seller', 'username');
+    .populate('seller', 'username email')
+    .populate('currentBidBy', 'username');
+
   if (!auction || !auction.isActive) {
     return;
   }
+
   auction.isActive = false;
+  auction.winner = auction.currentBidBy;
+  auction.winnerBid = auction.currentBid;
   await auction.save();
+
+  // Broadcast to everyone in the auction room
   io.to(auctionId).emit('auctionClosed', {
-    auctionId: auction._id,
-    currentBidBy: auction.currentBidBy,
-    currentBid: auction.currentBid,
+    auctionId,
+    winner: auction.currentBidBy,
+    winnerBid: auction.currentBid,
   });
 
+  // Notify Winner
   if (auction.currentBidBy) {
     const winner = await User.findById(auction.currentBidBy);
     if (winner?.email) {
@@ -54,6 +62,7 @@ export async function closeAuctionById(io, auctionId) {
     }
   }
 
+  // Notify seller
   if (auction.seller?.email) {
     await sendMail({
       to: auction.seller.email,
@@ -70,16 +79,18 @@ export async function closeAuctionById(io, auctionId) {
   }
 }
 
-// Function to schedule the closing of an auction
-// This function is called when an auction is created or updated
+/**
+ * When a new auction is created or updated, call this to schedule its close.
+ */
 export function scheduleAuctionClose(auction, io) {
-  if (timers.has(auction._id)) {
-    clearTimeout(timers.get(auction._id));
-  }
-  const msUntilEnd = new Date(auction.endTime).getTime() - Date.now();
-  const handle = setTimeout(() => {
-    closeAuctionById(io, auction._id);
-    timers.delete(auction._id);
-  }, Math.max(msUntilEnd, 0));
-  timers.set(auction._id, handle);
+  const id = auction._id.toString();
+  if (timers.has(id)) clearTimeout(timers.get(id));
+
+  const ms = new Date(auction.endTime).getTime() - Date.now();
+  const timeout = setTimeout(() => {
+    closeAuctionById(io, id);
+    timers.delete(id);
+  }, Math.max(ms, 0));
+
+  timers.set(id, timeout);
 }

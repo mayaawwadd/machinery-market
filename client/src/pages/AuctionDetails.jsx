@@ -78,7 +78,6 @@ export default function AuctionDetails() {
             showSuccess('Your bid was placed!');
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || 'Bid failed');
             const msg = err.response?.data?.message || 'Bid failed';
             showError(msg);
             setError(msg);
@@ -96,23 +95,31 @@ export default function AuctionDetails() {
                 <MachinerySpecs machine={auction.machine} />
 
                 <Stack spacing={2}>
-                    <Box>
-                        <Typography variant="h5">
-                            Current Bid: {(auction.currentBid || auction.startingPrice) / 100} JOD
+                    {/* 1. Top message: live vs winner vs non-winner */}
+                    {isLive ? (
+                        <Box>
+                            <Typography variant="h5">
+                                Current Bid: {(auction.currentBid || auction.startingPrice) / 100} JOD
+                            </Typography>
+                            <Typography variant="body1" color="text.secondary">
+                                Ends in: <Countdown endTime={auction.endTime} />
+                            </Typography>
+                        </Box>
+                    ) : user?._id === auction.winner._id.toString() ? (
+                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                            Congratulations, {auction.winner.username}! You won this auction with {(auction.currentBid / 100).toFixed(2)} JOD.
                         </Typography>
-                        <Typography variant="body1" color="text.secondary">
-                            {auction.isActive && new Date() < new Date(auction.endTime) ? (
-                                <>Ends in: <Countdown endTime={auction.endTime} /></>
-                            ) : (
-                                'CLOSED'
-                            )}
+                    ) : (
+                        <Typography variant="h6" color="text.secondary">
+                            This auction is closed. The winner was {auction.winner.username} with {(auction.currentBid / 100).toFixed(2)} JOD.
                         </Typography>
-                    </Box>
+                    )}
 
+                    {/* 2. Bid form (if live) or purchase button (if winner) */}
                     {isLive ? (
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
                             <TextField
-                                label={`Your bid should be at least ${auction.currentBid + auction.minimumIncrement} JOD`}
+                                label={`Your bid should be at least ${(auction.currentBid + auction.minimumIncrement) / 100} JOD`}
                                 type="number"
                                 value={bidAmount}
                                 onChange={e => setBidAmount(e.target.value)}
@@ -129,39 +136,21 @@ export default function AuctionDetails() {
                             </Button>
                         </Stack>
                     ) : (
-                        <>
-                            <Typography variant="h6" color="text.secondary">
-                                {auction.currentBidBy
-                                    ? `Winner: ${auction.currentBidBy.username} at ${(auction.currentBid / 100).toFixed(2)} JOD`
-                                    : 'No bids were placed.'}
-                            </Typography>
-                            <Box>
-                                {auction.winner && user?._id === auction.winner.toString() ? (
-                                    // Winner sees “Purchase” CTA
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        component="a"
-                                        href={`/auctions/${auction._id}/purchase`}
-                                    > Complete Purchase
-                                    </Button>
-                                ) : (
-                                    // Other users see who won
-                                    <Typography variant='h6' color='text.primary'>
-                                        This auction has ended. Winner: {" "}
-                                        <strong>
-                                            {auction.winner.username} @{" "}
-                                            {(auction.winnerBid).toFixed(2)} JOD
-                                        </strong>
-                                    </Typography>
-                                )}
-                            </Box>
-                        </>
-
+                        user?._id === auction.winner._id.toString() && (
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                fullWidth
+                                component="a"
+                                href={`/auctions/${auction._id}/purchase`}
+                            >
+                                Complete Purchase
+                            </Button>
+                        )
                     )}
                 </Stack>
 
-
+                {/* 3. Bid history with dynamic chip */}
                 <Paper elevation={1} sx={{ p: 3, maxHeight: 400, overflowY: 'auto' }}>
                     <Typography variant="h6" gutterBottom>Bid History</Typography>
                     {bids.length ? (
@@ -173,11 +162,14 @@ export default function AuctionDetails() {
                                             primary={`${b.bidder.username} — ${(b.amount / 100).toFixed(2)} JOD`}
                                             secondary={new Date(b.bidTime).toLocaleString()}
                                         />
-                                        {
-                                            idx === 0 && (
-                                                <Chip label="Highest Bid" size='small' color='success' sx={{ px: 1, ml: 1 }} />
-                                            )
-                                        }
+                                        {idx === 0 && (
+                                            <Chip
+                                                label={isLive ? "Highest Bid" : "Winner"}
+                                                size="small"
+                                                color={isLive ? "success" : "primary"}
+                                                sx={{ px: 1, ml: 1 }}
+                                            />
+                                        )}
                                     </ListItem>
                                     <Divider component="li" />
                                 </React.Fragment>

@@ -95,7 +95,7 @@ export const createAuction = asyncHandler(async (req, res) => {
   });
 
   // 4) Schedule auto-close & notify
-  scheduleAuctionClose(auction);
+  scheduleAuctionClose(auction, req.app.get('io'));
   const io = req.app.get('io');
   io?.emit('auctionCreated', auction);
 
@@ -141,7 +141,9 @@ export const getLiveAuctions = asyncHandler(async (req, res) => {
 export const getAuctionById = asyncHandler(async (req, res) => {
   const auction = await Auction.findById(req.params.id)
     .populate('machine')
-    .populate('seller', 'username');
+    .populate('seller', 'username')
+    .populate('currentBidBy', 'username')
+    .populate('winner', 'username');
 
   if (!auction) {
     return res.status(404).json({ message: 'Auction not found' });
@@ -244,7 +246,7 @@ export const placeBid = asyncHandler(async (req, res) => {
   }
 
   if (extended) {
-    scheduleAuctionClose(auction);
+    scheduleAuctionClose(auction, req.app.get('io'));
   }
 
   const io = req.app.get('io');
@@ -271,7 +273,9 @@ export const placeBid = asyncHandler(async (req, res) => {
 export const closeAuction = asyncHandler(async (req, res) => {
   const auction = await Auction.findById(req.params.id)
     .populate('machine', 'title')
-    .populate('seller', 'username');
+    .populate('seller', 'username')
+    .populate('currentBidBy', 'username');
+
   if (!auction || !auction.isActive) {
     return res.status(400).json({ message: 'Auction not available' });
   }
