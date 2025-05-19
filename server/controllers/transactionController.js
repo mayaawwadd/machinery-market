@@ -281,20 +281,30 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
       paypalCaptureId: capture.purchase_units[0].payments.captures[0].id,
     });
 
-    const buyer = await User.findById(transactionId.buyer);
+    await Machinery.findByIdAndUpdate(transaction.machinery, {
+      isSold: true,
+    });
+
+    const buyer = await User.findById(transactionId.buyer)
+      .populate('buyer', 'username email')
+      .populate('machinery', 'title equipmentDetails');
+
     if (buyer?.email) {
       await sendMail({
         to: buyer.email,
         from: process.env.SMTP_FROM,
         subject: `Payment received for "${transaction.machinery.title}"`,
-        text: `Your payment of $${transaction.amountCents / 100
-          } has been received.`,
+        text: `Your payment of $${
+          transaction.amountCents / 100
+        } has been received.`,
         html: `
           <p>Hi ${buyer.username},</p>
-          <p>Your payment of <strong>$${transaction.amountCents / 100
+          <p>Your payment of <strong>$${
+            transaction.amountCents / 100
           }</strong> has been received.</p>
-          <p><a href="${process.env.CLIENT_URL}/transactions/${transaction._id
-          }">
+          <p><a href="${process.env.CLIENT_URL}/transactions/${
+          transaction._id
+        }">
              View your transaction →</a></p>
         `,
       });
@@ -312,6 +322,3 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
     });
   }
 });
-
-
-
