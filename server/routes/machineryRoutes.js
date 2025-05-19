@@ -11,6 +11,7 @@ import { protect } from '../middleware/authMiddleware.js';
 import { adminOnly } from '../middleware/adminMiddleware.js';
 import { selfOrAdmin } from '../middleware/selfOrAdmin.js';
 import { ownerOrAdmin } from '../middleware/ownerOrAdmin.js';
+import { purchaseMachinery } from '../controllers/transactionController.js';
 
 const router = express.Router();
 
@@ -55,5 +56,8 @@ router.patch('/:id', protect, ownerOrAdmin, updateMachinery);
  * @access  Protected (only the seller or admin)
  */
 router.delete('/:id', protect, ownerOrAdmin, deleteMachinery);
+
+
+router.post('/:id/purchase', protect, purchaseMachinery);
 
 export default router;

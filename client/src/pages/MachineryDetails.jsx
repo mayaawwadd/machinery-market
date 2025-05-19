@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import {
     Container,
     Typography,
     CircularProgress,
     Box,
     Avatar,
+    Button,
     Grid,
 } from '@mui/material';
 import axiosInstance from '../services/axiosInstance';
@@ -79,6 +80,16 @@ export default function MachineryDetail() {
                         )}
                     </Grid>
                 </Grid>
+                <Box sx={{ mt: 4, textAlign: 'center' }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        component={RouterLink}
+                        to={`/machinery/${machine._id}/purchase`}
+                    >
+                        Purchase Now
+                    </Button>
+                </Box>
             </Box>
         </Container>
     );

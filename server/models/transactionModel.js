@@ -20,7 +20,7 @@ const transactionSchema = new mongoose.Schema(
     auction: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Auction',
-      required: true,
+      required: false,
     },
     amountCents: {
       type: Number,
