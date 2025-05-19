@@ -24,21 +24,21 @@ export default function AuctionPurchase() {
 
     if (error)
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, minHeight: 'calc(100vh-12rem)' }}>
+            <Box sx={{ mt: 4, minHeight: 'calc(100vh - 12rem)', display: 'flex', justifyContent: 'center' }}>
                 <Typography color="error">{error}</Typography>
             </Box>
         );
 
     if (!transaction)
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, minHeight: 'calc(100vh - 12rem)' }}>
                 <CircularProgress />
             </Box>
         );
 
     // 2) render the PayPal buttons, passing the transaction ID
     return (
-        <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
+        <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4, minHeight: 'calc(100vh - 12rem)' }}>
             <Typography variant="h6" gutterBottom>
                 Pay JOD {(transaction.amountCents / 100).toFixed(2)} for this auction
             </Typography>

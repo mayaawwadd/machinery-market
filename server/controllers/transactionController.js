@@ -287,17 +287,14 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
         to: buyer.email,
         from: process.env.SMTP_FROM,
         subject: `Payment received for "${transaction.machinery.title}"`,
-        text: `Your payment of $${
-          transaction.amountCents / 100
-        } has been received.`,
+        text: `Your payment of $${transaction.amountCents / 100
+          } has been received.`,
         html: `
           <p>Hi ${buyer.username},</p>
-          <p>Your payment of <strong>$${
-            transaction.amountCents / 100
+          <p>Your payment of <strong>$${transaction.amountCents / 100
           }</strong> has been received.</p>
-          <p><a href="${process.env.CLIENT_URL}/transactions/${
-          transaction._id
-        }">
+          <p><a href="${process.env.CLIENT_URL}/transactions/${transaction._id
+          }">
              View your transaction →</a></p>
         `,
       });
@@ -315,3 +312,6 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
     });
   }
 });
+
+
+

@@ -2,6 +2,7 @@
 import React from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../../services/axiosInstance';
 
 export default function PaypalPayment({ transactionId }) {
   const navigate = useNavigate();
@@ -14,37 +15,41 @@ export default function PaypalPayment({ transactionId }) {
 
   const style = { shape: 'rect', layout: 'vertical' };
 
-  // 3) Create the PayPal order on your server
+  // 1) Create the PayPal order on your server
   const createOrder = async () => {
-    const res = await fetch('/api/transactions/paypal/createOrderTest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transactionId }),
-    });
-    if (!res.ok) throw new Error('Could not create PayPal order');
-    const { orderId } = await res.json();
-    return orderId;
+    try {
+      const { data } = await axiosInstance.post(
+        '/transactions/paypal/createOrderTest',
+        { transactionId }
+      );
+      return data.orderId;
+    } catch (err) {
+      console.error('✖ createOrder error:', err.response?.data || err);
+      throw err;
+    }
   };
 
-  // 4) When buyer approves in PayPal popup
-  const onApprove = async data => {
+  // 2) Capture when buyer approves
+  const onApprove = async (data, actions) => {
     try {
-      // note: your route is POST /paypal/:transactionId/capturePaymentTest/:paymentId
-      const res = await fetch(
-        `/api/transactions/paypal/${transactionId}/capturePaymentTest/${data.orderID}`,
-        { method: 'POST' }
+      console.log('✅ onApprove data:', data);
+      const { data: captureResult } = await axiosInstance.post(
+        `/transactions/paypal/${transactionId}/capturePaymentTest/${data.orderID}`
       );
-      if (!res.ok) throw new Error('Capture failed');
-      // success → redirect to your confirmation page
+      console.log('✅ captureResult:', captureResult);
       navigate('/complete-payment');
     } catch (err) {
-      console.error(err);
+      // Log everything we got back
+      console.error('✖ capturePayment error:', {
+        status: err.response?.status,
+        body: err.response?.data,
+      });
       navigate('/cancel-payment');
     }
   };
 
-  const onError = err => {
-    console.error('PayPal error', err);
+  const onError = (err) => {
+    console.error('🚨 PayPal onError:', err);
     navigate('/cancel-payment');
   };
 

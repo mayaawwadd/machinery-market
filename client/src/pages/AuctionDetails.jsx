@@ -23,10 +23,8 @@ import Countdown from '../components/CountDown';
 import { showSuccess, showError } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
 
-
 export default function AuctionDetails() {
     const { id } = useParams();
-    const theme = useTheme();
     const { user } = useAuth();
     const [auction, setAuction] = useState(null);
     const [bids, setBids] = useState([]);
@@ -53,12 +51,10 @@ export default function AuctionDetails() {
         socket.current.on('connect', () => {
             socket.current.emit('joinAuction', id);
         });
-
         socket.current.on('bidPlaced', ({ currentBid, bid }) => {
             setAuction(a => ({ ...a, currentBid }));
             setBids(bs => [bid, ...bs]);
         });
-
         socket.current.on('auctionClosed', ({ winner, winnerBid }) => {
             setAuction(a => ({ ...a, isActive: false, winner, currentBid: winnerBid }));
         });
@@ -85,10 +81,22 @@ export default function AuctionDetails() {
         }
     };
 
-    if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, minHeight: 'calc(100vh-12rem)' }}><CircularProgress /></Box>;
-    if (error) return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8, minHeight: 'calc(100vh-12rem)' }}><Typography color="error">{error}</Typography></Box>;
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+    if (error) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+                <Typography color="error">{error}</Typography>
+            </Box>
+        );
+    }
 
-    const isLive = auction.isActive && new Date() < new Date(auction.endTime);
+    const isLive = auction.isActive && Date.now() < new Date(auction.endTime).getTime();
 
     return (
         <Container sx={{ py: 6 }}>
@@ -96,7 +104,7 @@ export default function AuctionDetails() {
                 <MachinerySpecs machine={auction.machine} />
 
                 <Stack spacing={2}>
-                    {/* 1. Top message: live vs winner vs non-winner */}
+                    {/* 1. Top message */}
                     {isLive ? (
                         <Box>
                             <Typography variant="h5">
@@ -106,21 +114,32 @@ export default function AuctionDetails() {
                                 Ends in: <Countdown endTime={auction.endTime} />
                             </Typography>
                         </Box>
-                    ) : user?._id === auction.winner._id.toString() ? (
-                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                            Congratulations, {auction.winner.username}! You won this auction with {(auction.currentBid / 100).toFixed(2)} JOD.
-                        </Typography>
+                    ) : auction.winner ? (
+                        // there _is_ a winner
+                        user?._id === auction.winner._id?.toString() ? (
+                            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                🎉 Congratulations, {auction.winner.username}! You won with{' '}
+                                {(auction.currentBid / 100).toFixed(2)} JOD.
+                            </Typography>
+                        ) : (
+                            <Typography variant="h6" color="text.secondary">
+                                This auction is closed. Winner:{' '}
+                                <strong>{auction.winner.username}</strong> @{' '}
+                                {(auction.currentBid / 100).toFixed(2)} JOD.
+                            </Typography>
+                        )
                     ) : (
+                        // no bids placed
                         <Typography variant="h6" color="text.secondary">
-                            This auction is closed. The winner was {auction.winner.username} with {(auction.currentBid / 100).toFixed(2)} JOD.
+                            This auction closed with <strong>no bids</strong>.
                         </Typography>
                     )}
 
-                    {/* 2. Bid form (if live) or purchase button (if winner) */}
+                    {/* 2. Bid form (if live) or purchase button */}
                     {isLive ? (
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
                             <TextField
-                                label={`Your bid should be at least ${(auction.currentBid + auction.minimumIncrement) / 100} JOD`}
+                                label={`Your bid should be at least ${((auction.currentBid || auction.startingPrice) + auction.minimumIncrement) / 100} JOD`}
                                 type="number"
                                 value={bidAmount}
                                 onChange={e => setBidAmount(e.target.value)}
@@ -137,22 +156,27 @@ export default function AuctionDetails() {
                             </Button>
                         </Stack>
                     ) : (
+                        // only show purchase if there's a winner _and_ the logged‐in user was that winner
+                        auction.winner?._id &&
                         user?._id === auction.winner._id.toString() && (
                             <Button
                                 variant="contained"
                                 color="primary"
                                 fullWidth
                                 component={RouterLink}
-                                to={`/purchase/${auction._id}`} >
+                                to={`/auctions/${auction._id}/purchase`}
+                            >
                                 Complete Purchase
                             </Button>
                         )
                     )}
                 </Stack>
 
-                {/* 3. Bid history with dynamic chip */}
+                {/* 3. Bid history */}
                 <Paper elevation={1} sx={{ p: 3, maxHeight: 400, overflowY: 'auto' }}>
-                    <Typography variant="h6" gutterBottom>Bid History</Typography>
+                    <Typography variant="h6" gutterBottom>
+                        Bid History
+                    </Typography>
                     {bids.length ? (
                         <List disablePadding>
                             {bids.map((b, idx) => (
@@ -164,9 +188,9 @@ export default function AuctionDetails() {
                                         />
                                         {idx === 0 && (
                                             <Chip
-                                                label={isLive ? "Highest Bid" : "Winner"}
+                                                label={isLive ? 'Highest Bid' : 'Winner'}
                                                 size="small"
-                                                color={isLive ? "success" : "primary"}
+                                                color={isLive ? 'success' : 'primary'}
                                                 sx={{ px: 1, ml: 1 }}
                                             />
                                         )}
