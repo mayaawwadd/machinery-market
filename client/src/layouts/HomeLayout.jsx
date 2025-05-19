@@ -7,7 +7,7 @@ function HomeLayout() {
   const location = useLocation();
   // Array of pages that should not include a footer/navbar
   const hideNavbarRoutes = ['/login', '/register'];
-  const hideFooterRoutes = ['/login', '/register', '/profile'];
+  const hideFooterRoutes = ['/login', '/register'];
 
   // Boolean variable for the pages that should include a footer/navbar
   const shouldShowNavbar = !hideNavbarRoutes.includes(location.pathname);
