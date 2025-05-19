@@ -9,7 +9,6 @@ import HomeLayout from './layouts/HomeLayout';
 import Landing from './pages/Landing';
 import Login from './pages/Auth/login/Login';
 import Register from './pages/Auth/register/Register';
-import Profile from './pages/Profile';
 import BuyMachinery from './pages/BuyMachinery';
 import SellMachinery from './pages/SellMachinery';
 import Auctions from './pages/Auctions';
@@ -19,8 +18,12 @@ import CompletePayment from './pages/completePayment';
 import MachineryDetails from './pages/MachineryDetails';
 import AuctionPurchase from './pages/AuctionPurchase';
 import PaypalPayment from './components/payment/PaypalPayment';
-import AuctionsPage from './pages/Auctions';
 import MachineryPurchase from './pages/MachineryPurchase';
+import Profile from './pages/Profile';
+import ProfileInfo from './pages/profile/ProfileInfo';
+import MyListings from './pages/profile/MyListings';
+import MyTransactions from './pages/profile/MyTransactions';
+
 
 const router = createBrowserRouter([
   {
@@ -30,7 +33,15 @@ const router = createBrowserRouter([
       { index: true, element: <Landing /> },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
-      { path: 'profile', element: <Profile /> },
+      {
+        path: 'profile',
+        element: <Profile />,
+        children: [
+          { index: true, element: <ProfileInfo /> },
+          { path: 'listings', element: <MyListings /> },
+          { path: 'transactions', element: <MyTransactions /> },
+        ]
+      },
       { path: 'machinery/buy', element: <BuyMachinery /> },
       { path: 'machinery/:id', element: <MachineryDetails /> },
       { path: 'machinery/sell', element: <SellMachinery /> },

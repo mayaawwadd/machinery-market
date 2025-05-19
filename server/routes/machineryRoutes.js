@@ -34,7 +34,7 @@ router.get('/', getAllMachinery);
  * @desc    Get machinery listings for the current logged-in user
  * @access  Protected
  */
-router.get('/my', getMyMachinery);
+router.get('/my', protect, getMyMachinery);
 
 /**
  * @route   GET /api/machinery/:id
