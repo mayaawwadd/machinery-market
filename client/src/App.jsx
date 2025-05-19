@@ -20,6 +20,7 @@ import MachineryDetails from './pages/MachineryDetails';
 import AuctionPurchase from './pages/AuctionPurchase';
 import PaypalPayment from './components/payment/PaypalPayment';
 import AuctionsPage from './pages/Auctions';
+import MachineryPurchase from './pages/MachineryPurchase';
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
       { path: 'auctions/:id', element: <AuctionDetails /> },
       //paypal flow
       { path: 'auctions/:id/purchase', element: <AuctionPurchase /> },
+      { path: 'machinery/:id/purchase', element: <MachineryPurchase /> },
       { path: 'paypal', element: <PaypalPayment /> },
       { path: 'complete-payment', element: <CompletePayment /> },
       { path: 'cancel-payment', element: <CancelPayment /> },
