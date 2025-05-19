@@ -23,6 +23,7 @@ import Profile from './pages/Profile';
 import ProfileInfo from './pages/profile/ProfileInfo';
 import MyListings from './pages/profile/MyListings';
 import MyTransactions from './pages/profile/MyTransactions';
+import AdminDashboard from './pages/admin/AdminDashboard';
 
 
 const router = createBrowserRouter([
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
       { index: true, element: <Landing /> },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
+      { path: 'admin', element: <AdminDashboard /> },
       {
         path: 'profile',
         element: <Profile />,
