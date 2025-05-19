@@ -22,6 +22,10 @@ export default function PaypalPayment({ transactionId }) {
         '/transactions/paypal/createOrderTest',
         { transactionId }
       );
+      console.log('✅ createOrder data:', data);
+      if (!data.orderId) {
+        throw new Error('No order ID returned from PayPal');
+      }
       return data.orderId;
     } catch (err) {
       console.error('✖ createOrder error:', err.response?.data || err);
