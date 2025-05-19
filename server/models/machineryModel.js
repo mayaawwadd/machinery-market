@@ -114,10 +114,11 @@ const machinerySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isSold: {
+    /*isSold: {
       type: Boolean,
       default: false,
     },
+    */
   },
   {
     timestamps: true,

@@ -142,7 +142,7 @@ export const getMachineryById = async (req, res) => {
   try {
     const listing = await Machinery.findById(req.params.id).populate(
       'seller',
-      'username email phone profileImage'
+      'username email'
     );
 
     if (!listing) {
