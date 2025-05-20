@@ -247,7 +247,7 @@ function BuyMachinery() {
                 {/* Filters Pane */}
                 {!isMobile ? (
                     <Grid item xs={12} md={3}>
-                        <Box sx={{ border: '1px solid #eee', borderRadius: 2 }}>
+                        <Box sx={{ border: '1px solid #eee', borderRadius: 2, width: 200, mr: 21 }}>
                             {renderFilters()}
                         </Box>
                     </Grid>
