@@ -34,7 +34,7 @@ function CTA() {
                         variant="contained"
                         size="large"
                         component={Link}
-                        to="/buy"
+                        to="/machinery/buy"
                         sx={{ fontWeight: 'bold', borderRadius: '999px', px: 5 }}
                         color="secondary"
                     >
@@ -44,7 +44,7 @@ function CTA() {
                         variant="outlined"
                         size="large"
                         component={Link}
-                        to="/sell"
+                        to="/machinery/sell"
                         sx={{ fontWeight: 'bold', borderRadius: '999px', color: 'inherit', borderColor: 'inherit' }}
                     >
                         List Your Machinery

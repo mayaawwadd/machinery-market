@@ -65,7 +65,7 @@ function Hero() {
                         variant="contained"
                         size="large"
                         component={Link}
-                        to="/buy"
+                        to="/machinery/buy"
                         sx={{ borderRadius: '999px', fontWeight: 'bold' }}
                     >
                         Browse Listings
