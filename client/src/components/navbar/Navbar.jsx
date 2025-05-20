@@ -26,6 +26,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { useTheme as useAppTheme } from '../../context/ThemeContext';
@@ -106,9 +107,20 @@ function Navbar() {
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           {/* Logo */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="p" noWrap sx={{ fontWeight: 600 }}>
-              .MACHINERY MARKET
-            </Typography>
+            <Link to="/" style={{ textDecoration: 'none' }}>
+              <Typography
+                variant="p"
+                sx={{
+                  fontWeight: 700,
+                  mt: 2,
+                  mb: 1,
+                  color: theme.palette.text.primary,
+                }}
+              >
+                .MACHINERY MARKET
+              </Typography>
+            </Link>
+
           </Box>
 
           {/* Center: Links (Hidden on xs) */}
@@ -228,11 +240,15 @@ function Navbar() {
               </Typography>
             </MenuItem>
 
-            <MenuItem onClick={handleMenuClose}>
+            <MenuItem onClick={handleMenuClose} component={Link} to="/profile">
               <PersonIcon fontSize="small" sx={{ mr: 1 }} />
               View Profile
             </MenuItem>
-            <MenuItem onClick={handleMenuClose}>
+            <MenuItem onClick={() => {
+              toast.info('You will be able to view notifications soon!');
+              handleMenuClose();
+            }
+            }>
               <NotificationsIcon fontSize="small" sx={{ mr: 1 }} />
               Notifications
             </MenuItem>
@@ -248,10 +264,10 @@ function Navbar() {
             </MenuItem>
           </Menu>
         </Toolbar>
-      </AppBar>
+      </AppBar >
 
       {/* Responsive Drawer for Mobile */}
-      <Box component="nav">
+      < Box component="nav" >
         <Drawer
           anchor="right"
           open={mobileOpen}
@@ -266,10 +282,10 @@ function Navbar() {
         >
           {drawer}
         </Drawer>
-      </Box>
+      </Box >
 
       {/* Push content below the AppBar */}
-      <Toolbar />
+      < Toolbar />
     </>
   );
 }
