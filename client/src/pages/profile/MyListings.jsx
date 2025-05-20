@@ -25,7 +25,7 @@ export default function MyListings() {
     useEffect(() => {
         const fetchMyListings = async () => {
             try {
-                const { data } = await axiosInstance.get('/api/machinery/my');
+                const { data } = await axiosInstance.get('/machinery/my');
                 setListings(data);
             } catch (err) {
                 console.error(err);
