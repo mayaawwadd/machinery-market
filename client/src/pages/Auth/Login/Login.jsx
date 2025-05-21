@@ -48,7 +48,11 @@ function Login() {
       login(userWithoutToken, token, rememberMe);
       showSuccess('Login successful!');
 
-      navigate('/profile');
+      if (userWithoutToken.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/profile');
+      }
     } catch (error) {
       handleApiError(error, 'Login failed. Please try again.');
     }
