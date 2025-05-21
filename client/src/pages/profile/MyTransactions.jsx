@@ -39,7 +39,12 @@ export default function MyTransactions() {
                 setLoading(false);
             }
         };
-        if (user?._id) fetchTransactions();
+
+        if (user?._id) {
+            fetchTransactions();
+        } else {
+            setLoading(false);
+        }
     }, [user]);
 
     if (loading) {
@@ -58,7 +63,7 @@ export default function MyTransactions() {
         );
     }
 
-    if (transactions.length === 0) {
+    if (!transactions.length) {
         return (
             <Typography variant="body1" sx={{ textAlign: 'center', mt: 4 }}>
                 You have no transactions yet.
@@ -95,25 +100,33 @@ export default function MyTransactions() {
                                     </Link>
                                 </TableCell>
                                 <TableCell>
-                                    <Link
-                                        component={RouterLink}
-                                        to={`/machinery/${txn.machinery._id}`}
-                                        underline="hover"
-                                    >
-                                        {txn.machinery.title}
-                                    </Link>
+                                    {txn.machinery ? (
+                                        <Link
+                                            component={RouterLink}
+                                            to={`/machinery/${txn.machinery._id}`}
+                                            underline="hover"
+                                        >
+                                            {txn.machinery.title}
+                                        </Link>
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Item not available
+                                        </Typography>
+                                    )}
                                 </TableCell>
                                 <TableCell align="right">
                                     {new Intl.NumberFormat('en-US', {
                                         style: 'currency',
                                         currency: txn.currency || 'USD',
-                                    }).format(txn.amountCents / 100)}
+                                    }).format((txn.amountCents || 0) / 100)}
                                 </TableCell>
                                 <TableCell sx={{ textTransform: 'capitalize' }}>
-                                    {txn.paymentStatus}
+                                    {txn.paymentStatus || 'unknown'}
                                 </TableCell>
                                 <TableCell>
-                                    {new Date(txn.createdAt).toLocaleDateString()}
+                                    {txn.createdAt
+                                        ? new Date(txn.createdAt).toLocaleDateString()
+                                        : 'N/A'}
                                 </TableCell>
                             </TableRow>
                         ))}
