@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axiosInstance from '../../services/axiosInstance';
-import { showSuccess, showError } from '../../utils/toast';
+import { showInfo } from '../../utils/toast';
 
 export default function AdminReviews() {
     const [reviews, setReviews] = useState([]);
