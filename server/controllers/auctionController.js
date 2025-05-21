@@ -199,7 +199,7 @@ export const placeBid = asyncHandler(async (req, res) => {
     auction: auction._id,
     bidder: userId,
     amount: amount,
-  });
+  }).then(b => b.populate('bidder', 'username'));
 
   // Step 3: If bid arrives in last X minutes, extend auction by X
   let extended = false;
