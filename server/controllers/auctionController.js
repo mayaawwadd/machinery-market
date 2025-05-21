@@ -18,7 +18,7 @@ export const createAuction = asyncHandler(async (req, res) => {
     startTime,
     endTime,
     startingPrice,
-    minimumIncrement = 1,
+    minimumIncrement,
     title,
     serialNumber,
     usedHours,
@@ -82,6 +82,11 @@ export const createAuction = asyncHandler(async (req, res) => {
       .status(400)
       .json({ message: 'endTime must come after startTime' });
   }
+
+  if (minimumIncrement == null || isNaN(minimumIncrement)) {
+    return res.status(400).json({ message: 'minimumIncrement is required' });
+  }
+  f;
 
   // 3) Create the auction
   const auction = await Auction.create({
@@ -152,7 +157,7 @@ export const getAuctionById = asyncHandler(async (req, res) => {
   // Load bids (sorted by time)
   const bids = await Bid.find({ auction: auction._id })
     .populate('bidder', 'username')
-    .sort('bidTime');
+    .sort('-bidTime');
 
   res.status(201).json({ auction, bids });
 });
@@ -184,7 +189,7 @@ export const placeBid = asyncHandler(async (req, res) => {
 
   // Determine minimum valid bid
   const floor = Math.max(auction.currentBid, auction.startingPrice);
-  const minNext = floor + auction.minimumIncrement;
+  const minNext = (floor + auction.minimumIncrement) / 100;
   if (amount < minNext) {
     return res.status(400).json({ message: `Bid must be at least ${minNext}` });
   }
@@ -193,7 +198,7 @@ export const placeBid = asyncHandler(async (req, res) => {
   const bid = await Bid.create({
     auction: auction._id,
     bidder: userId,
-    amount,
+    amount: amount,
   });
 
   // Step 3: If bid arrives in last X minutes, extend auction by X

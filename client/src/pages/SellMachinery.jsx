@@ -210,12 +210,12 @@ export default function SellMachinery() {
             qualityDescription: form.qualityDescription,
             origin: form.origin,
             voltage: form.voltage,
-            category: form.category,        // now a string
+            category: form.category,
             equipmentDetails: form.equipmentDetails,
             originalInvoice: form.originalInvoice,
             manufacturingDate: form.manufacturingDate,
             manufacturer: form.manufacturer,
-            priceCents: Number(form.priceCents),
+            priceCents: Number(form.priceCents) * 100,
             location: form.location,
             images: form.images,
             video: form.video,
@@ -228,8 +228,8 @@ export default function SellMachinery() {
                     ...machinePayload,
                     endTime: auctionData.endTime,
                     startTime: auctionData.startTime,        // optional
-                    startingPrice: Number(auctionData.startingPrice),
-                    minimumIncrement: Number(auctionData.minimumIncrement),
+                    startingPrice: Number(auctionData.startingPrice) * 100,
+                    minimumIncrement: Number(auctionData.minimumIncrement) * 100,
                 };
 
                 // this will create both the machine and the auction

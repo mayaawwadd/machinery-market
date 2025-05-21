@@ -67,7 +67,7 @@ export default function AuctionDetails() {
 
     const handlePlaceBid = async () => {
         try {
-            await axiosInstance.post(`/auctions/${id}/bid`, { amount: Number(bidAmount) });
+            await axiosInstance.post(`/auctions/${id}/bid`, { amount: Number(bidAmount) * 100 });
             const { data } = await axiosInstance.get(`/auctions/${id}`);
             setAuction(data.auction);
             setBids(data.bids);
@@ -139,7 +139,7 @@ export default function AuctionDetails() {
                     {isLive ? (
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
                             <TextField
-                                label={`Your bid should be at least ${((auction.currentBid || auction.startingPrice) + auction.minimumIncrement) / 100} JOD`}
+                                label={`Your bid should be at least ${(Math.max(auction.currentBid, auction.startingPrice) + auction.minimumIncrement) / 100} JOD`}
                                 type="number"
                                 value={bidAmount}
                                 onChange={e => setBidAmount(e.target.value)}
