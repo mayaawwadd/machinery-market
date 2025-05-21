@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axiosInstance from '../../services/axiosInstance';
-import { showSuccess, showError, showInfo } from '../../utils/toast';
+import { showSuccess, showError } from '../../utils/toast';
 
 export default function AdminReviews() {
     const [reviews, setReviews] = useState([]);
@@ -40,7 +40,7 @@ export default function AdminReviews() {
     }, []);
 
     const handleDelete = async (id) => {
-        showInfo('You will be able to delete reviews soon!');
+        showInfo("You will be able to delete auctions soon!");
     };
 
     if (loading) {
@@ -70,30 +70,31 @@ export default function AdminReviews() {
                         <TableRow>
                             <TableCell>Buyer</TableCell>
                             <TableCell>Seller</TableCell>
-
                             <TableCell>Rating</TableCell>
                             <TableCell>Comment</TableCell>
-                            <TableCell>Flagged</TableCell>
-                            <TableCell align="right">Action</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell>Action</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {reviews.map((r) => (
                             <TableRow key={r._id} hover>
-                                <TableCell>{r.buyer?.username || 'N/A'}</TableCell>
-                                <TableCell>{r.seller?.username || 'N/A'}</TableCell>
-                                <TableCell>{r.rating}</TableCell>
-                                <TableCell>{r.comment}</TableCell>
+                                <TableCell>{r.buyer?.username || 'Unknown'}</TableCell>
+                                <TableCell>{r.seller?.username || 'Unknown'}</TableCell>
+                                <TableCell>{r.rating} ★</TableCell>
+                                <TableCell>
+                                    {r.comment?.split(' ').slice(0, 5).join(' ')}{r.comment.split(' ').length > 5 ? '...' : ''}
+                                </TableCell>
                                 <TableCell>
                                     <Chip
-                                        label={r.isFlagged ? 'Yes' : 'No'}
-                                        color={r.isFlagged ? 'warning' : 'default'}
+                                        label={r.isFlagged ? 'Flagged' : 'Visible'}
+                                        color={r.isFlagged ? 'error' : 'success'}
                                         size="small"
                                     />
                                 </TableCell>
-                                <TableCell align="right">
+                                <TableCell>
                                     <Tooltip title="Delete Review">
-                                        <IconButton onClick={() => handleDelete(r._id)}>
+                                        <IconButton onClick={() => handleDelete(r._id)} color="error">
                                             <DeleteIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
