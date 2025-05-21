@@ -122,7 +122,11 @@ export const getUserTransactions = asyncHandler(async (req, res) => {
 // @route   GET /api/transactions/
 // @access  Public
 export const getAllTransactions = asyncHandler(async (req, res) => {
-  const transaction = await Transaction.find();
+  const transaction = await Transaction.find()
+    .populate('machinery', 'title')
+    .populate('buyer', 'username email')
+    .populate('seller', 'username email')
+    .sort({ createdAt: -1 });;
 
   if (!transaction) {
     return res.status(404).json({ message: 'no transactions available' });
@@ -294,17 +298,14 @@ export const capturePaymentTest = asyncHandler(async (req, res) => {
         to: buyer.email,
         from: process.env.SMTP_FROM,
         subject: `Payment received for "${transaction.machinery.title}"`,
-        text: `Your payment of $${
-          transaction.amountCents / 100
-        } has been received.`,
+        text: `Your payment of $${transaction.amountCents / 100
+          } has been received.`,
         html: `
           <p>Hi ${buyer.username},</p>
-          <p>Your payment of <strong>$${
-            transaction.amountCents / 100
+          <p>Your payment of <strong>$${transaction.amountCents / 100
           }</strong> has been received.</p>
-          <p><a href="${process.env.CLIENT_URL}/transactions/${
-          transaction._id
-        }">
+          <p><a href="${process.env.CLIENT_URL}/transactions/${transaction._id
+          }">
              View your transaction →</a></p>
         `,
       });

@@ -123,7 +123,7 @@ export default function AuctionDetails() {
                             </Typography>
                         ) : (
                             <Typography variant="h6" color="text.secondary">
-                                This auction is closed. Winner:{' '}
+                                This auction is closed. Winner:{' '}.
                                 <strong>{auction.winner.username}</strong> @{' '}
                                 {(auction.currentBid / 100).toFixed(2)} JOD.
                             </Typography>

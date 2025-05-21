@@ -23,7 +23,8 @@ import mongoose, { mongo } from 'mongoose';
 import Auction from './models/auctionModel.js';
 import { scheduleAuctionClose } from './utils/auctionScheduler.js';
 import uploadRoutes from './routes/uploadRoutes.js';
-import e from 'express';
+import adminRoutes from './routes/adminRoutes.js';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -51,6 +52,8 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/auctions', auctionRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api', emailRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 const server = http.createServer(app);
 

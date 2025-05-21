@@ -24,6 +24,13 @@ import ProfileInfo from './pages/profile/ProfileInfo';
 import MyListings from './pages/profile/MyListings';
 import MyTransactions from './pages/profile/MyTransactions';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminOverview from './pages/admin/Overview';
+import AdminUsers from './pages/admin/Users';
+import AdminMachines from './pages/admin/Machines';
+import AdminAuctions from './pages/admin/Auctions';
+import AdminTransactions from './pages/admin/Transactions';
+import AdminReviews from './pages/admin/Reviews';
+
 
 
 const router = createBrowserRouter([
@@ -34,7 +41,18 @@ const router = createBrowserRouter([
       { index: true, element: <Landing /> },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
-      { path: 'admin', element: <AdminDashboard /> },
+      {
+        path: 'admin',
+        element: <AdminDashboard />,
+        children: [
+          { index: true, element: <AdminOverview /> },
+          { path: 'users', element: <AdminUsers /> },
+          { path: 'machines', element: <AdminMachines /> },
+          { path: 'auctions', element: <AdminAuctions /> },
+          { path: 'transactions', element: <AdminTransactions /> },
+          { path: 'reviews', element: <AdminReviews /> },
+        ]
+      },
       {
         path: 'profile',
         element: <Profile />,
